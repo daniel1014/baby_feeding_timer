@@ -1,103 +1,176 @@
-import Image from "next/image";
+'use client';
+
+import React, { useEffect } from 'react';
+import { motion } from 'framer-motion';
+import { Toaster, toast } from 'react-hot-toast';
+import { useTimer } from '../hooks/useTimer';
+import { useScripture } from '../hooks/useScripture';
+import { TimerDisplay } from '../components/Timer/TimerDisplay';
+import { TimerControls } from '../components/Timer/TimerControls';
+import { TimerSettings } from '../components/Timer/TimerSettings';
+import { MilkBottleSticker, MilkBottleDecorations } from '../components/UI/MilkBottleSticker';
+import { ScripturePopup } from '../components/UI/ScripturePopup';
+import { playNotificationSound, triggerHapticFeedback, showBrowserNotification, requestNotificationPermission } from '../utils/soundNotification';
 
 export default function Home() {
-  return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+  const timer = useTimer();
+  const scripture = useScripture();
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+  // Handle timer completion
+  useEffect(() => {
+    if (timer.isCompleted) {
+      // Play notification sound
+      playNotificationSound();
+      
+      // Trigger haptic feedback
+      triggerHapticFeedback();
+      
+      // Show browser notification
+      showBrowserNotification(
+        'Baby Feeding Timer Complete! 🍼',
+        'Your feeding session has finished. Great job!'
+      );
+      
+      // Show scripture popup
+      scripture.onTimerComplete();
+      
+      // Show toast notification
+      toast.success('Timer completed! 🎉', {
+        duration: 3000,
+        position: 'top-center',
+        style: {
+          background: 'rgb(152, 251, 152)',
+          color: 'rgb(34, 102, 34)',
+          fontWeight: '500',
+        },
+      });
+    }
+  }, [timer.isCompleted]);
+
+  // Request notification permission on first load
+  useEffect(() => {
+    requestNotificationPermission();
+  }, []);
+
+  // Random scripture intervals (every 10 minutes for long timers)
+  useEffect(() => {
+    if (timer.isActive && timer.duration >= 30 * 60) { // Only for 30+ minute timers
+      const interval = setInterval(() => {
+        scripture.onRandomInterval();
+      }, 10 * 60 * 1000); // Every 10 minutes
+      
+      return () => clearInterval(interval);
+    }
+  }, [timer.isActive, timer.duration]);
+
+  return (
+    <div className="min-h-screen relative overflow-hidden">
+      {/* Background Decorations */}
+      <MilkBottleDecorations />
+      
+      {/* Main Content */}
+      <div className="relative z-10 min-h-screen flex flex-col">
+        {/* Header */}
+        <motion.header 
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-center py-8"
+        >
+          <div className="flex items-center justify-center gap-3 mb-2">
+            <MilkBottleSticker size="medium" animate={false} />
+            <h1 className="text-3xl sm:text-4xl font-bold text-gray-700">
+              Baby Feeding Timer
+            </h1>
+            <MilkBottleSticker size="medium" animate={false} />
+          </div>
+          <p className="text-gray-600 font-medium">
+            A gentle companion for feeding time
+          </p>
+        </motion.header>
+
+        {/* Main Timer Section */}
+        <main className="flex-1 flex flex-col items-center justify-center px-4 py-8 max-w-2xl mx-auto w-full">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.2 }}
+            className="w-full space-y-8"
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
+            {/* Timer Display */}
+            <TimerDisplay
+              remaining={timer.remaining}
+              duration={timer.duration}
+              isActive={timer.isActive}
+              isCompleted={timer.isCompleted}
             />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
+
+            {/* Timer Controls */}
+            <div className="flex justify-center">
+              <TimerControls
+                isActive={timer.isActive}
+                isPaused={timer.isPaused}
+                isCompleted={timer.isCompleted}
+                onStart={timer.start}
+                onPause={timer.pause}
+                onResume={timer.resume}
+                onReset={timer.reset}
+              />
+            </div>
+
+            {/* Timer Settings */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4 }}
+              className="flex justify-center"
+            >
+              <TimerSettings
+                currentDuration={timer.duration}
+                onDurationChange={timer.setDuration}
+                disabled={timer.isActive || timer.isPaused}
+              />
+            </motion.div>
+          </motion.div>
+        </main>
+
+        {/* Encouragement Footer */}
+        <motion.footer
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.6 }}
+          className="text-center py-8 px-4"
         >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+          <div className="flex items-center justify-center gap-2 text-lg font-medium text-gray-600">
+            <MilkBottleSticker size="small" />
+            <span>"You're doing great, mama!" </span>
+            <MilkBottleSticker size="small" />
+          </div>
+          <p className="text-sm text-gray-500 mt-2">
+            Every feeding is a gift of love 💕
+          </p>
+        </motion.footer>
+      </div>
+
+      {/* Scripture Popup */}
+      <ScripturePopup
+        scripture={scripture.currentScripture}
+        isVisible={scripture.isPopupVisible}
+        isFavorite={scripture.currentScripture ? scripture.isFavorite(scripture.currentScripture.id) : false}
+        onClose={scripture.hideScripture}
+        onNext={scripture.nextScripture}
+        onToggleFavorite={(id) => {
+          if (scripture.isFavorite(id)) {
+            scripture.removeFromFavorites(id);
+            toast.success('Removed from favorites');
+          } else {
+            scripture.addToFavorites(id);
+            toast.success('Added to favorites ❤️');
+          }
+        }}
+      />
+
+      {/* Toast Notifications */}
+      <Toaster />
     </div>
   );
 }
