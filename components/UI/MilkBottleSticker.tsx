@@ -1,5 +1,5 @@
 import React from 'react';
-import { motion } from 'framer-motion';
+import { motion, easeInOut } from 'framer-motion';
 
 interface MilkBottleStickerProps {
   size?: 'small' | 'medium' | 'large';
@@ -31,7 +31,7 @@ export function MilkBottleSticker({
       transition: {
         duration: 3,
         repeat: Infinity,
-        ease: "easeInOut"
+        ease: easeInOut
       }
     },
     hover: {
