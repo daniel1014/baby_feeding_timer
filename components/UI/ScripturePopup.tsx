@@ -70,24 +70,51 @@ export function ScripturePopup({
             </div>
             
             {/* Scripture Content */}
-            <div className="text-center mb-8">
-              <motion.blockquote
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.2 }}
-                className="text-lg text-gray-700 leading-relaxed font-medium mb-4 italic"
-              >
-                "{scripture.verse}"
-              </motion.blockquote>
-              
-              <motion.cite
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.4 }}
-                className="text-sm font-semibold text-pink-600 not-italic"
-              >
-                — {scripture.reference}
-              </motion.cite>
+            <div className="text-center mb-8 space-y-6">
+              {/* English Version */}
+              <div>
+                <motion.blockquote
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.2 }}
+                  className="text-lg text-gray-700 leading-relaxed font-medium mb-3 italic"
+                >
+                  "{scripture.verse}"
+                </motion.blockquote>
+                
+                <motion.cite
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.3 }}
+                  className="text-sm font-semibold text-pink-600 not-italic"
+                >
+                  — {scripture.reference}
+                </motion.cite>
+              </div>
+
+
+              {/* Chinese Version */}
+              <div>
+                <motion.blockquote
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.4 }}
+                  className="text-lg text-gray-700 leading-relaxed font-medium mb-3"
+                  style={{ fontFamily: 'system-ui, -apple-system, "Segoe UI", "Roboto", "Microsoft YaHei", sans-serif' }}
+                >
+                  "{scripture.verseChinese}"
+                </motion.blockquote>
+                
+                <motion.cite
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.5 }}
+                  className="text-sm font-semibold text-blue-600 not-italic"
+                  style={{ fontFamily: 'system-ui, -apple-system, "Segoe UI", "Roboto", "Microsoft YaHei", sans-serif' }}
+                >
+                  — {scripture.referenceChinese}
+                </motion.cite>
+              </div>
             </div>
             
             {/* Action Buttons */}
