@@ -16,20 +16,21 @@ import {
   SleepingSession, 
   SessionType, 
   TAB_THEMES, 
-  BOTTLE_PRESETS 
+  BOTTLE_PRESETS,
+  TIMER_PRESETS
 } from '../types';
 
-// Timer Hook
-function useTimer() {
-  const [time, setTime] = useState(0);
+// Stopwatch Hook (counts up from 0) - using millisecond precision
+function useStopwatch() {
+  const [timeMs, setTimeMs] = useState(0);
   const [isRunning, setIsRunning] = useState(false);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     if (isRunning) {
       intervalRef.current = setInterval(() => {
-        setTime(prevTime => prevTime + 1);
-      }, 1000);
+        setTimeMs(prevTime => prevTime + 100);
+      }, 100);
     } else {
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
@@ -46,14 +47,15 @@ function useTimer() {
   const start = () => setIsRunning(true);
   const pause = () => setIsRunning(false);
   const reset = () => {
-    setTime(0);
+    setTimeMs(0);
     setIsRunning(false);
   };
 
-  const formatTime = (seconds: number) => {
-    const hours = Math.floor(seconds / 3600);
-    const minutes = Math.floor((seconds % 3600) / 60);
-    const secs = seconds % 60;
+  const formatTime = (milliseconds: number) => {
+    const totalSeconds = Math.floor(milliseconds / 1000);
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const secs = totalSeconds % 60;
     
     if (hours > 0) {
       return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
@@ -61,7 +63,177 @@ function useTimer() {
     return `${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
-  return { time, isRunning, start, pause, reset, formatTime };
+  const timeInSeconds = Math.floor(timeMs / 1000);
+
+  return { time: timeInSeconds, timeMs, isRunning, start, pause, reset, formatTime };
+}
+
+// Custom Timer Hook for tabs (like breastfeeding/sleeping) - supports both stopwatch and countdown
+function useTabTimer() {
+  const [mode, setMode] = useState<'stopwatch' | 'countdown'>('stopwatch');
+  const [timeMs, setTimeMs] = useState(0);
+  const [initialTimeMs, setInitialTimeMs] = useState(0);
+  const [isRunning, setIsRunning] = useState(false);
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    if (isRunning) {
+      intervalRef.current = setInterval(() => {
+        if (mode === 'stopwatch') {
+          setTimeMs(prevTime => prevTime + 100);
+        } else {
+          setTimeMs(prevTime => {
+            if (prevTime <= 100) {
+              setIsRunning(false);
+              return 0;
+            }
+            return prevTime - 100;
+          });
+        }
+      }, 100);
+    } else {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+      }
+    }
+
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+      }
+    };
+  }, [isRunning, mode]);
+
+  const startStopwatch = () => {
+    setMode('stopwatch');
+    setIsRunning(true);
+  };
+
+  const startTimer = (durationSeconds: number) => {
+    const durationMs = durationSeconds * 1000;
+    setMode('countdown');
+    setInitialTimeMs(durationMs);
+    setTimeMs(durationMs);
+    setIsRunning(true);
+  };
+
+  const pause = () => setIsRunning(false);
+  const resume = () => setIsRunning(true);
+
+  const reset = () => {
+    setTimeMs(mode === 'countdown' ? initialTimeMs : 0);
+    setIsRunning(false);
+  };
+
+  const formatTime = (milliseconds: number) => {
+    const totalSeconds = Math.floor(milliseconds / 1000);
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const secs = totalSeconds % 60;
+    
+    if (hours > 0) {
+      return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    }
+    return `${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  const timeInSeconds = Math.floor(timeMs / 1000);
+  const elapsedTime = mode === 'countdown' ? Math.floor((initialTimeMs - timeMs) / 1000) : timeInSeconds;
+
+  return {
+    mode,
+    time: timeInSeconds,
+    timeMs,
+    initialTimeMs,
+    elapsedTime,
+    isRunning,
+    startStopwatch,
+    startTimer,
+    pause,
+    resume,
+    reset,
+    formatTime,
+    isCompleted: mode === 'countdown' && timeMs === 0 && initialTimeMs > 0
+  };
+}
+
+// Countdown Timer Hook (counts down from preset value) - using millisecond precision
+function useCountdownTimer() {
+  const [initialTimeMs, setInitialTimeMs] = useState(0);
+  const [remainingTimeMs, setRemainingTimeMs] = useState(0);
+  const [isRunning, setIsRunning] = useState(false);
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    if (isRunning && remainingTimeMs > 0) {
+      intervalRef.current = setInterval(() => {
+        setRemainingTimeMs(prevTime => {
+          if (prevTime <= 100) {
+            setIsRunning(false);
+            return 0;
+          }
+          return prevTime - 100;
+        });
+      }, 100);
+    } else {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+      }
+    }
+
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+      }
+    };
+  }, [isRunning, remainingTimeMs]);
+
+  const start = (duration?: number) => {
+    if (duration) {
+      const durationMs = duration * 1000;
+      setInitialTimeMs(durationMs);
+      setRemainingTimeMs(durationMs);
+    }
+    setIsRunning(true);
+  };
+  
+  const pause = () => setIsRunning(false);
+  
+  const reset = () => {
+    setRemainingTimeMs(initialTimeMs);
+    setIsRunning(false);
+  };
+
+  const formatTime = (milliseconds: number) => {
+    const totalSeconds = Math.floor(milliseconds / 1000);
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const secs = totalSeconds % 60;
+    
+    if (hours > 0) {
+      return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    }
+    return `${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  const elapsedTimeMs = initialTimeMs - remainingTimeMs;
+  const remainingTime = Math.floor(remainingTimeMs / 1000);
+  const elapsedTime = Math.floor(elapsedTimeMs / 1000);
+  const initialTime = Math.floor(initialTimeMs / 1000);
+
+  return { 
+    remainingTime, 
+    elapsedTime, 
+    initialTime,
+    remainingTimeMs,
+    elapsedTimeMs,
+    initialTimeMs,
+    isRunning, 
+    start, 
+    pause, 
+    reset, 
+    formatTime 
+  };
 }
 
 // Helper function to format date for display
@@ -78,7 +250,10 @@ const mlToOz = (ml: number) => (ml * 0.033814).toFixed(1);
 const ozToMl = (oz: number) => Math.round(oz * 29.5735);
 
 export default function Home() {
-  const { time, isRunning, start, pause, reset, formatTime } = useTimer();
+  // Separate timers for each tab
+  const breastfeedingTimer = useTabTimer();
+  const sleepingTimer = useTabTimer();
+  const countdownTimer = useCountdownTimer();
   const scripture = useScripture();
   const [activeTab, setActiveTab] = useState<SessionType>('breastfeeding');
   const [sessions, setSessions] = useState<FeedingSession[]>([]);
@@ -88,6 +263,8 @@ export default function Home() {
   const [isClient, setIsClient] = useState(false);
   const [sleepStartTime, setSleepStartTime] = useState<Date | null>(null);
   const [currentTime, setCurrentTime] = useState<Date | null>(null);
+  const [customTimerDuration, setCustomTimerDuration] = useState('');
+  const [showTimerInput, setShowTimerInput] = useState(false);
 
   // Prevent hydration mismatch by only showing animated particles on client
   useEffect(() => {
@@ -109,22 +286,22 @@ export default function Home() {
 
   // Handle breastfeeding completion
   const completeBreastfeeding = () => {
-    if (time === 0) return;
+    if (breastfeedingTimer.time === 0) return;
     
-    pause();
+    breastfeedingTimer.pause();
     const now = new Date();
-    const startTime = new Date(now.getTime() - time * 1000);
+    const startTime = new Date(now.getTime() - breastfeedingTimer.time * 1000);
     const session: BreastfeedingSession = {
       id: Date.now().toString(),
       type: 'breastfeeding',
       startTime,
       endTime: now,
       date: startTime.toISOString().split('T')[0],
-      duration: time,
+      duration: breastfeedingTimer.time,
       notes: notes || undefined,
     };
     setSessions(prev => [session, ...prev]);
-    reset();
+    breastfeedingTimer.reset();
     setNotes('');
     
     // Trigger completion effects
@@ -132,10 +309,10 @@ export default function Home() {
     triggerHapticFeedback();
     showBrowserNotification(
       'Breastfeeding Session Complete! 🤱',
-      `Session lasted ${formatTime(time)}. Great job!`
+      `Session lasted ${breastfeedingTimer.formatTime(breastfeedingTimer.timeMs)}. Great job!`
     );
     scripture.onTimerComplete();
-    toast.success(`Breastfeeding session completed! ${formatTime(time)} 🎉`, {
+    toast.success(`Breastfeeding session completed! ${breastfeedingTimer.formatTime(breastfeedingTimer.timeMs)} 🎉`, {
       duration: 3000,
       position: 'top-center',
     });
@@ -172,22 +349,22 @@ export default function Home() {
 
   // Handle sleeping session completion
   const completeSleeping = () => {
-    if (time === 0) return;
+    if (sleepingTimer.time === 0) return;
     
-    pause();
+    sleepingTimer.pause();
     const now = new Date();
-    const startTime = new Date(now.getTime() - time * 1000);
+    const startTime = new Date(now.getTime() - sleepingTimer.time * 1000);
     const session: SleepingSession = {
       id: Date.now().toString(),
       type: 'sleeping',
       startTime,
       endTime: now,
       date: startTime.toISOString().split('T')[0],
-      duration: time,
+      duration: sleepingTimer.time,
       notes: notes || undefined,
     };
     setSessions(prev => [session, ...prev]);
-    reset();
+    sleepingTimer.reset();
     setNotes('');
     setSleepStartTime(null);
     
@@ -196,9 +373,9 @@ export default function Home() {
     triggerHapticFeedback();
     showBrowserNotification(
       'Sleep Session Complete! 😴',
-      `Baby slept for ${formatTime(time)}. Sweet dreams!`
+      `Baby slept for ${sleepingTimer.formatTime(sleepingTimer.timeMs)}. Sweet dreams!`
     );
-    toast.success(`Sleep session completed! ${formatTime(time)} 😴`, {
+    toast.success(`Sleep session completed! ${sleepingTimer.formatTime(sleepingTimer.timeMs)} 😴`, {
       duration: 3000,
       position: 'top-center',
     });
@@ -207,7 +384,7 @@ export default function Home() {
   // Handle sleep start
   const startSleeping = () => {
     setSleepStartTime(new Date());
-    start();
+    sleepingTimer.startStopwatch();
   };
 
   return (
@@ -327,44 +504,113 @@ export default function Home() {
                   <div className="flex flex-col items-center mb-6">
                     {/* Animated Milk Bottle */}
                     <motion.div
-                      animate={{ scale: isRunning ? [1, 1.02, 1] : 1 }}
-                      transition={{ duration: 2, repeat: isRunning ? Infinity : 0 }}
+                      animate={{ scale: breastfeedingTimer.isRunning ? [1, 1.02, 1] : 1 }}
+                      transition={{ duration: 2, repeat: breastfeedingTimer.isRunning ? Infinity : 0 }}
                       className="mb-4"
                     >
                       <AnimatedMilkBottleTimer
-                        duration={1800} // 30 minutes default for demo
-                        currentTime={time}
-                        isActive={isRunning}
-                        size="large"
+                        duration={breastfeedingTimer.mode === 'countdown' ? breastfeedingTimer.initialTimeMs / 1000 : 60}
+                        currentTime={breastfeedingTimer.elapsedTime}
+                        isActive={breastfeedingTimer.isRunning}
+                        size="medium"
                         theme="breastfeeding"
+                        drainRate={breastfeedingTimer.mode === 'countdown' ? breastfeedingTimer.initialTimeMs / 1000 : 60}
                       />
                     </motion.div>
                     
                     {/* Time Display */}
                     <div className="text-4xl font-mono font-bold bg-gradient-to-r from-pink-400 to-purple-500 bg-clip-text text-transparent mb-2">
-                      {formatTime(time)}
+                      {breastfeedingTimer.formatTime(breastfeedingTimer.timeMs)}
                     </div>
                     <div className="text-sm text-gray-500">
-                      {isRunning ? '🔴 Recording...' : time > 0 ? '⏸️ Paused' : '⏱️ Ready to start'}
+                      {breastfeedingTimer.mode === 'stopwatch' 
+                        ? (breastfeedingTimer.isRunning ? '🔴 Recording...' : breastfeedingTimer.time > 0 ? '⏸️ Paused' : '⏱️ Ready to start')
+                        : (breastfeedingTimer.isRunning ? '⏰ Timer running...' : breastfeedingTimer.time > 0 ? '⏸️ Paused' : breastfeedingTimer.isCompleted ? '✅ Completed' : '⏰ Timer ready')
+                      }
+                    </div>
+                  </div>
+
+                  {/* Timer Presets */}
+                  <div className="mb-6">
+                    <label className="text-sm font-medium text-gray-700 mb-3 block">
+                      Quick Timer Presets
+                    </label>
+                    <div className="grid grid-cols-3 gap-2 mb-4">
+                      {TIMER_PRESETS.map((preset) => (
+                        <motion.button
+                          key={preset.value}
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                          onClick={() => breastfeedingTimer.startTimer(preset.value)}
+                          className="p-2 bg-pink-50 hover:bg-pink-100 text-pink-700 rounded-lg font-medium transition-all duration-200 border-2 border-transparent hover:border-pink-200 text-sm"
+                        >
+                          {preset.label}
+                        </motion.button>
+                      ))}
+                    </div>
+                    
+                    {/* Custom Timer Input */}
+                    <div className="flex gap-2">
+                      <input
+                        type="number"
+                        placeholder="Custom minutes"
+                        value={customTimerDuration}
+                        onChange={(e) => setCustomTimerDuration(e.target.value)}
+                        className="flex-1 p-2 text-center border border-gray-200 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent text-sm"
+                        min="1"
+                        max="1440"
+                      />
+                      <motion.button
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={() => {
+                          const duration = parseInt(customTimerDuration);
+                          if (duration && duration > 0) {
+                            breastfeedingTimer.startTimer(duration * 60);
+                            setCustomTimerDuration('');
+                          }
+                        }}
+                        disabled={!customTimerDuration || parseInt(customTimerDuration) <= 0}
+                        className={`px-4 py-2 rounded-lg font-medium text-sm ${
+                          customTimerDuration && parseInt(customTimerDuration) > 0
+                            ? 'bg-pink-500 hover:bg-pink-600 text-white'
+                            : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                        }`}
+                      >
+                        Start Timer
+                      </motion.button>
                     </div>
                   </div>
                   
                   <div className="flex justify-center gap-3 mb-6 flex-wrap">
-                    {!isRunning ? (
-                      <motion.button
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                        onClick={start}
-                        className="flex items-center gap-2 bg-gradient-to-r from-pink-400 to-pink-500 hover:from-pink-500 hover:to-pink-600 text-white px-6 py-3 rounded-full shadow-lg font-medium"
-                      >
-                        <Play className="w-5 h-5" />
-                        Start
-                      </motion.button>
+                    {!breastfeedingTimer.isRunning ? (
+                      <>
+                        <motion.button
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                          onClick={breastfeedingTimer.startStopwatch}
+                          className="flex items-center gap-2 bg-gradient-to-r from-pink-400 to-pink-500 hover:from-pink-500 hover:to-pink-600 text-white px-6 py-3 rounded-full shadow-lg font-medium"
+                        >
+                          <Play className="w-5 h-5" />
+                          Start Stopwatch
+                        </motion.button>
+                        {breastfeedingTimer.time > 0 && breastfeedingTimer.mode === 'countdown' && (
+                          <motion.button
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                            onClick={breastfeedingTimer.resume}
+                            className="flex items-center gap-2 bg-gradient-to-r from-green-400 to-green-500 hover:from-green-500 hover:to-green-600 text-white px-6 py-3 rounded-full shadow-lg font-medium"
+                          >
+                            <Play className="w-5 h-5" />
+                            Resume Timer
+                          </motion.button>
+                        )}
+                      </>
                     ) : (
                       <motion.button
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
-                        onClick={pause}
+                        onClick={breastfeedingTimer.pause}
                         className="flex items-center gap-2 bg-gradient-to-r from-red-400 to-red-500 hover:from-red-500 hover:to-red-600 text-white px-6 py-3 rounded-full shadow-lg font-medium"
                       >
                         <Pause className="w-5 h-5" />
@@ -375,14 +621,14 @@ export default function Home() {
                     <motion.button
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
-                      onClick={reset}
+                      onClick={breastfeedingTimer.reset}
                       className="flex items-center gap-2 bg-gray-200 hover:bg-gray-300 text-gray-700 px-6 py-3 rounded-full shadow-lg font-medium"
                     >
                       <RotateCcw className="w-5 h-5" />
                       Reset
                     </motion.button>
 
-                    {time > 0 && (
+                    {breastfeedingTimer.time > 0 && (
                       <motion.button
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
@@ -438,8 +684,9 @@ export default function Home() {
                       duration={100}
                       currentTime={bottleAmount ? Math.min(parseFloat(bottleAmount) || 0, 100) : 0}
                       isActive={false}
-                      size="medium"
+                      size="small"
                       theme="bottle"
+                      drainRate={100}
                     />
                   </div>
                   {/* Unit Toggle */}
@@ -582,44 +829,113 @@ export default function Home() {
                   <div className="flex flex-col items-center mb-6">
                     {/* Animated Milk Bottle for Sleep */}
                     <motion.div
-                      animate={{ scale: isRunning ? [1, 1.02, 1] : 1 }}
-                      transition={{ duration: 3, repeat: isRunning ? Infinity : 0 }}
+                      animate={{ scale: sleepingTimer.isRunning ? [1, 1.02, 1] : 1 }}
+                      transition={{ duration: 3, repeat: sleepingTimer.isRunning ? Infinity : 0 }}
                       className="mb-4 opacity-80"
                     >
                       <AnimatedMilkBottleTimer
-                        duration={3600} // 1 hour default for sleep
-                        currentTime={time}
-                        isActive={isRunning}
-                        size="large"
+                        duration={sleepingTimer.mode === 'countdown' ? sleepingTimer.initialTimeMs / 1000 : 60}
+                        currentTime={sleepingTimer.elapsedTime}
+                        isActive={sleepingTimer.isRunning}
+                        size="medium"
                         theme="sleeping"
+                        drainRate={sleepingTimer.mode === 'countdown' ? sleepingTimer.initialTimeMs / 1000 : 60}
                       />
                     </motion.div>
                     
                     {/* Time Display */}
                     <div className="text-4xl font-mono font-bold bg-gradient-to-r from-purple-400 to-indigo-500 bg-clip-text text-transparent mb-2">
-                      {formatTime(time)}
+                      {sleepingTimer.formatTime(sleepingTimer.timeMs)}
                     </div>
                     <div className="text-sm text-gray-500">
-                      {isRunning ? '😴 Sleeping...' : time > 0 ? '⏸️ Paused' : '🌙 Ready for sleep'}
+                      {sleepingTimer.mode === 'stopwatch' 
+                        ? (sleepingTimer.isRunning ? '😴 Sleeping...' : sleepingTimer.time > 0 ? '⏸️ Paused' : '🌙 Ready for sleep')
+                        : (sleepingTimer.isRunning ? '⏰ Sleep timer running...' : sleepingTimer.time > 0 ? '⏸️ Paused' : sleepingTimer.isCompleted ? '✅ Sleep time completed' : '⏰ Sleep timer ready')
+                      }
+                    </div>
+                  </div>
+
+                  {/* Sleep Timer Presets */}
+                  <div className="mb-6">
+                    <label className="text-sm font-medium text-gray-700 mb-3 block">
+                      Sleep Timer Presets
+                    </label>
+                    <div className="grid grid-cols-3 gap-2 mb-4">
+                      {TIMER_PRESETS.map((preset) => (
+                        <motion.button
+                          key={preset.value}
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                          onClick={() => sleepingTimer.startTimer(preset.value)}
+                          className="p-2 bg-purple-50 hover:bg-purple-100 text-purple-700 rounded-lg font-medium transition-all duration-200 border-2 border-transparent hover:border-purple-200 text-sm"
+                        >
+                          {preset.label}
+                        </motion.button>
+                      ))}
+                    </div>
+                    
+                    {/* Custom Sleep Timer Input */}
+                    <div className="flex gap-2">
+                      <input
+                        type="number"
+                        placeholder="Custom minutes"
+                        value={customTimerDuration}
+                        onChange={(e) => setCustomTimerDuration(e.target.value)}
+                        className="flex-1 p-2 text-center border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm"
+                        min="1"
+                        max="1440"
+                      />
+                      <motion.button
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={() => {
+                          const duration = parseInt(customTimerDuration);
+                          if (duration && duration > 0) {
+                            sleepingTimer.startTimer(duration * 60);
+                            setCustomTimerDuration('');
+                          }
+                        }}
+                        disabled={!customTimerDuration || parseInt(customTimerDuration) <= 0}
+                        className={`px-4 py-2 rounded-lg font-medium text-sm ${
+                          customTimerDuration && parseInt(customTimerDuration) > 0
+                            ? 'bg-purple-500 hover:bg-purple-600 text-white'
+                            : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                        }`}
+                      >
+                        Start Sleep Timer
+                      </motion.button>
                     </div>
                   </div>
                   
                   <div className="flex justify-center gap-3 mb-6 flex-wrap">
-                    {!isRunning ? (
-                      <motion.button
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                        onClick={startSleeping}
-                        className="flex items-center gap-2 bg-gradient-to-r from-purple-400 to-indigo-500 hover:from-purple-500 hover:to-indigo-600 text-white px-6 py-3 rounded-full shadow-lg font-medium"
-                      >
-                        <Play className="w-5 h-5" />
-                        Start Sleep
-                      </motion.button>
+                    {!sleepingTimer.isRunning ? (
+                      <>
+                        <motion.button
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                          onClick={startSleeping}
+                          className="flex items-center gap-2 bg-gradient-to-r from-purple-400 to-indigo-500 hover:from-purple-500 hover:to-indigo-600 text-white px-6 py-3 rounded-full shadow-lg font-medium"
+                        >
+                          <Play className="w-5 h-5" />
+                          Start Stopwatch
+                        </motion.button>
+                        {sleepingTimer.time > 0 && sleepingTimer.mode === 'countdown' && (
+                          <motion.button
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                            onClick={sleepingTimer.resume}
+                            className="flex items-center gap-2 bg-gradient-to-r from-green-400 to-green-500 hover:from-green-500 hover:to-green-600 text-white px-6 py-3 rounded-full shadow-lg font-medium"
+                          >
+                            <Play className="w-5 h-5" />
+                            Resume Timer
+                          </motion.button>
+                        )}
+                      </>
                     ) : (
                       <motion.button
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
-                        onClick={pause}
+                        onClick={sleepingTimer.pause}
                         className="flex items-center gap-2 bg-gradient-to-r from-red-400 to-red-500 hover:from-red-500 hover:to-red-600 text-white px-6 py-3 rounded-full shadow-lg font-medium"
                       >
                         <Pause className="w-5 h-5" />
@@ -631,7 +947,7 @@ export default function Home() {
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
                       onClick={() => {
-                        reset();
+                        sleepingTimer.reset();
                         setSleepStartTime(null);
                       }}
                       className="flex items-center gap-2 bg-gray-200 hover:bg-gray-300 text-gray-700 px-6 py-3 rounded-full shadow-lg font-medium"
@@ -640,7 +956,7 @@ export default function Home() {
                       Reset
                     </motion.button>
 
-                    {time > 0 && (
+                    {sleepingTimer.time > 0 && (
                       <motion.button
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
@@ -669,6 +985,8 @@ export default function Home() {
                 </div>
               </motion.div>
             )}
+
+
           </AnimatePresence>
         </div>
 
@@ -681,7 +999,7 @@ export default function Home() {
             </h3>
             <div className="space-y-3">
               {sessions.slice(0, 5).map((session, index) => {
-                const theme = TAB_THEMES[session.type];
+                const theme = TAB_THEMES[session.type as SessionType];
                 const getSessionIcon = () => {
                   switch (session.type) {
                     case 'breastfeeding':
@@ -735,7 +1053,7 @@ export default function Home() {
                     <div className="text-right">
                       {session.duration && (
                         <div className="font-mono text-sm font-medium text-gray-600">
-                          {formatTime(session.duration)}
+                          {breastfeedingTimer.formatTime(session.duration)}
                         </div>
                       )}
                       {session.type === 'bottle' && 'amount' in session && (

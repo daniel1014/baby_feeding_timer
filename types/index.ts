@@ -102,6 +102,16 @@ export const BOTTLE_PRESETS = [
   { label: '180ml', value: 180 }
 ];
 
+// Timer Presets (in seconds)
+export const TIMER_PRESETS = [
+  { label: '2 min', value: 120 },
+  { label: '5 min', value: 300 },
+  { label: '10 min', value: 600 },
+  { label: '15 min', value: 900 },
+  { label: '20 min', value: 1200 },
+  { label: '30 min', value: 1800 }
+];
+
 export type TimerAction = 
   | { type: 'START' }
   | { type: 'PAUSE' }
