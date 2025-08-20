@@ -3,10 +3,10 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Toaster, toast } from 'react-hot-toast';
-import { Play, Pause, RotateCcw, Baby, Milk, Clock, Save, Moon } from 'lucide-react';
+import { Play, Pause, RotateCcw, Baby, Milk, Clock, Save, Moon, Timer, Watch, Plus, Check } from 'lucide-react';
 import { MilkBottleSticker } from '../components/UI/MilkBottleSticker';
 import { ScripturePopup } from '../components/UI/ScripturePopup';
-import { AnimatedMilkBottleTimer } from '../components/UI/AnimatedMilkBottleTimer';
+import AnimatedMilkBottleTimer from "../components/UI/AnimatedMilkBottleTimer"
 import { useScripture } from '../hooks/useScripture';
 import { playNotificationSound, triggerHapticFeedback, showBrowserNotification, requestNotificationPermission } from '../utils/soundNotification';
 import { 
@@ -75,25 +75,42 @@ function useTabTimer() {
   const [initialTimeMs, setInitialTimeMs] = useState(0);
   const [isRunning, setIsRunning] = useState(false);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  
+  // 🔧 FIX: Use ref to track mode without causing useEffect re-runs
+  const modeRef = useRef(mode);
+  modeRef.current = mode; // Keep ref updated
 
   useEffect(() => {
     if (isRunning) {
+      // Clear any existing interval first to prevent multiple intervals
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+      }
+
       intervalRef.current = setInterval(() => {
-        if (mode === 'stopwatch') {
+        if (modeRef.current === 'stopwatch') {
           setTimeMs(prevTime => prevTime + 100);
         } else {
           setTimeMs(prevTime => {
-            if (prevTime <= 100) {
-              setIsRunning(false);
+            const newTime = prevTime - 100;
+            if (newTime <= 0) {
+              // Clear interval immediately to prevent race condition
+              if (intervalRef.current) {
+                clearInterval(intervalRef.current);
+                intervalRef.current = null;
+              }
+              // Use setTimeout to avoid state update in render cycle
+              setTimeout(() => setIsRunning(false), 0);
               return 0;
             }
-            return prevTime - 100;
+            return newTime;
           });
         }
       }, 100);
     } else {
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
+        intervalRef.current = null;
       }
     }
 
@@ -102,7 +119,21 @@ function useTabTimer() {
         clearInterval(intervalRef.current);
       }
     };
-  }, [isRunning, mode]);
+  }, [isRunning]); // Only depend on isRunning, not mode
+
+  const setStopwatchMode = () => {
+    setMode('stopwatch');
+    setTimeMs(0);
+    setInitialTimeMs(0);
+    setIsRunning(false);
+  };
+
+  const setTimerMode = () => {
+    setMode('countdown');
+    setTimeMs(0);
+    setInitialTimeMs(0);
+    setIsRunning(false);
+  };
 
   const startStopwatch = () => {
     setMode('stopwatch');
@@ -140,6 +171,9 @@ function useTabTimer() {
   const timeInSeconds = Math.floor(timeMs / 1000);
   const elapsedTime = mode === 'countdown' ? Math.floor((initialTimeMs - timeMs) / 1000) : timeInSeconds;
 
+  // Clean implementation without excessive logging
+
+
   return {
     mode,
     time: timeInSeconds,
@@ -147,6 +181,8 @@ function useTabTimer() {
     initialTimeMs,
     elapsedTime,
     isRunning,
+    setStopwatchMode,
+    setTimerMode,
     startStopwatch,
     startTimer,
     pause,
@@ -265,6 +301,8 @@ export default function Home() {
   const [currentTime, setCurrentTime] = useState<Date | null>(null);
   const [customTimerDuration, setCustomTimerDuration] = useState('');
   const [showTimerInput, setShowTimerInput] = useState(false);
+  const [showCustomDurationInput, setShowCustomDurationInput] = useState(false);
+  const [showCustomSleepDurationInput, setShowCustomSleepDurationInput] = useState(false);
 
   // Prevent hydration mismatch by only showing animated particles on client
   useEffect(() => {
@@ -444,19 +482,21 @@ export default function Home() {
         </motion.div>
 
         {/* Tab Navigation */}
-        <div className="flex bg-white rounded-xl p-1 shadow-lg mb-8 max-w-2xl mx-auto">
+        <div className="flex bg-white rounded-xl p-1 shadow-xl border border-gray-100 mb-8 max-w-2xl mx-auto">
           {(['breastfeeding', 'bottle', 'sleeping'] as SessionType[]).map((tabType) => {
             const theme = TAB_THEMES[tabType];
             const isActive = activeTab === tabType;
             
             return (
-              <button
+              <motion.button
                 key={tabType}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
                 onClick={() => setActiveTab(tabType)}
-                className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-lg font-medium transition-all duration-200 ${
+                className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-lg font-medium transition-all duration-300 ${
                   isActive
-                    ? theme.secondary + ' shadow-sm'
-                    : `text-gray-600 hover:${theme.accent}`
+                    ? theme.secondary + ' shadow-md transform translate-y-[-1px]'
+                    : `text-gray-600 hover:${theme.accent} hover:shadow-sm`
                 }`}
               >
                 {tabType === 'breastfeeding' && <Baby className="w-4 h-4" />}
@@ -472,7 +512,7 @@ export default function Home() {
                   {tabType === 'bottle' && 'Bottle'}
                   {tabType === 'sleeping' && 'Sleep'}
                 </span>
-              </button>
+              </motion.button>
             );
           })}
         </div>
@@ -489,6 +529,7 @@ export default function Home() {
                 exit={{ opacity: 0, x: 20 }}
                 className="space-y-6"
               >
+
                 {/* Date & Time Display */}
                 <div className="text-center mb-4">
                   <div className="text-lg font-semibold text-gray-800">
@@ -496,6 +537,34 @@ export default function Home() {
                   </div>
                   <div className="text-sm text-gray-500">
                     {currentTime ? currentTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
+                  </div>
+                </div>
+
+                {/* Mode Toggle */}
+                <div className="flex justify-center mb-6">
+                  <div className="flex items-center bg-white rounded-full p-1 shadow-sm border border-gray-200">
+                    <button
+                      onClick={breastfeedingTimer.setStopwatchMode}
+                      className={`flex items-center gap-2 px-4 py-2 rounded-full font-medium transition-all duration-200 ${
+                        breastfeedingTimer.mode === 'stopwatch'
+                          ? 'bg-pink-500 text-white shadow-sm'
+                          : 'text-gray-600 hover:text-pink-600 hover:bg-pink-50'
+                      }`}
+                    >
+                      <Watch className="w-4 h-4" />
+                      <span className="text-sm">Stopwatch</span>
+                    </button>
+                    <button
+                      onClick={breastfeedingTimer.setTimerMode}
+                      className={`flex items-center gap-2 px-4 py-2 rounded-full font-medium transition-all duration-200 ${
+                        breastfeedingTimer.mode === 'countdown'
+                          ? 'bg-pink-500 text-white shadow-sm'
+                          : 'text-gray-600 hover:text-pink-600 hover:bg-pink-50'
+                      }`}
+                    >
+                      <Timer className="w-4 h-4" />
+                      <span className="text-sm">Timer</span>
+                    </button>
                   </div>
                 </div>
 
@@ -509,12 +578,11 @@ export default function Home() {
                       className="mb-4"
                     >
                       <AnimatedMilkBottleTimer
-                        duration={breastfeedingTimer.mode === 'countdown' ? breastfeedingTimer.initialTimeMs / 1000 : 60}
-                        currentTime={breastfeedingTimer.elapsedTime}
-                        isActive={breastfeedingTimer.isRunning}
+                        mode={breastfeedingTimer.mode}
+                        initialDuration={breastfeedingTimer.mode === 'countdown' ? breastfeedingTimer.initialTimeMs : undefined}
+                        isRunning={breastfeedingTimer.isRunning}
                         size="medium"
                         theme="breastfeeding"
-                        drainRate={breastfeedingTimer.mode === 'countdown' ? breastfeedingTimer.initialTimeMs / 1000 : 60}
                       />
                     </motion.div>
                     
@@ -530,76 +598,172 @@ export default function Home() {
                     </div>
                   </div>
 
-                  {/* Timer Presets */}
-                  <div className="mb-6">
-                    <label className="text-sm font-medium text-gray-700 mb-3 block">
-                      Quick Timer Presets
-                    </label>
-                    <div className="grid grid-cols-3 gap-2 mb-4">
-                      {TIMER_PRESETS.map((preset) => (
-                        <motion.button
-                          key={preset.value}
-                          whileHover={{ scale: 1.05 }}
-                          whileTap={{ scale: 0.95 }}
-                          onClick={() => breastfeedingTimer.startTimer(preset.value)}
-                          className="p-2 bg-pink-50 hover:bg-pink-100 text-pink-700 rounded-lg font-medium transition-all duration-200 border-2 border-transparent hover:border-pink-200 text-sm"
-                        >
-                          {preset.label}
-                        </motion.button>
-                      ))}
-                    </div>
-                    
-                    {/* Custom Timer Input */}
-                    <div className="flex gap-2">
-                      <input
-                        type="number"
-                        placeholder="Custom minutes"
-                        value={customTimerDuration}
-                        onChange={(e) => setCustomTimerDuration(e.target.value)}
-                        className="flex-1 p-2 text-center border border-gray-200 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent text-sm"
-                        min="1"
-                        max="1440"
-                      />
-                      <motion.button
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                        onClick={() => {
-                          const duration = parseInt(customTimerDuration);
-                          if (duration && duration > 0) {
-                            breastfeedingTimer.startTimer(duration * 60);
-                            setCustomTimerDuration('');
-                          }
-                        }}
-                        disabled={!customTimerDuration || parseInt(customTimerDuration) <= 0}
-                        className={`px-4 py-2 rounded-lg font-medium text-sm ${
-                          customTimerDuration && parseInt(customTimerDuration) > 0
-                            ? 'bg-pink-500 hover:bg-pink-600 text-white'
-                            : 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                        }`}
+                  {/* Conditional Content Based on Mode */}
+                  <AnimatePresence mode="wait">
+                    {breastfeedingTimer.mode === 'stopwatch' && breastfeedingTimer.time === 0 && !breastfeedingTimer.isRunning ? (
+                      <motion.div
+                        key="stopwatch-ready"
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -10 }}
+                        className="mb-6"
                       >
-                        Start Timer
-                      </motion.button>
-                    </div>
-                  </div>
+                      </motion.div>
+                    ) : breastfeedingTimer.mode === 'countdown' ? (
+                      <motion.div
+                        key="timer-presets"
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -10 }}
+                        className="mb-6"
+                      >
+                        <div className="bg-gradient-to-r from-pink-50 to-purple-50 rounded-lg p-4 border border-pink-100">
+                          <label className="text-sm font-medium text-pink-700 mb-3 block flex items-center gap-2">
+                            <Timer className="w-4 h-4" />
+                            Quick Timer Presets
+                          </label>
+                          <div className="grid grid-cols-3 gap-2 mb-4">
+                            {TIMER_PRESETS.map((preset) => (
+                              <motion.button
+                                key={preset.value}
+                                whileHover={{ scale: 1.05 }}
+                                whileTap={{ scale: 0.95 }}
+                                onClick={() => breastfeedingTimer.startTimer(preset.value)}
+                                className="group relative p-3 bg-white hover:bg-pink-50 text-pink-700 rounded-lg font-medium transition-all duration-300 border border-pink-200 hover:border-pink-300 hover:shadow-md text-sm"
+                              >
+                                <span className="relative z-10">{preset.label}</span>
+                                <motion.div
+                                  className="absolute inset-0 bg-gradient-to-r from-pink-100 to-purple-100 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                                  layoutId={`preset-${preset.value}`}
+                                />
+                              </motion.button>
+                            ))}
+                          </div>
+                          
+                          {/* 
+                            Enhanced Custom Timer Input for Breastfeeding Timer
+                            - Clickable label to expand/collapse the custom duration input
+                            - Smooth animation for better UX
+                          */}
+                          <div className="space-y-3">
+                            <motion.button
+                              whileHover={{ scale: 1.05 }}
+                              whileTap={{ scale: 0.98 }}
+                              onClick={() => setShowCustomDurationInput(!showCustomDurationInput)}
+                              className="text-xs font-medium text-pink-600 flex items-center gap-1 hover:text-pink-700 transition-colors duration-200 cursor-pointer"
+                            >
+                              <motion.div
+                                animate={{ rotate: showCustomDurationInput ? 45 : 0 }}
+                                transition={{ duration: 0.2 }}
+                              >
+                                <Plus className="w-3 h-3" />
+                              </motion.div>
+                              Custom Duration
+                            </motion.button>
+                            
+                            <AnimatePresence>
+                              {showCustomDurationInput && (
+                                <motion.div
+                                  initial={{ opacity: 0, height: 0, y: -10 }}
+                                  animate={{ opacity: 1, height: 'auto', y: 0 }}
+                                  exit={{ opacity: 0, height: 0, y: -10 }}
+                                  transition={{ duration: 0.3, ease: 'easeInOut' }}
+                                  className="overflow-hidden"
+                                >
+                                  <div className="flex gap-3">
+                                    <div className="flex-1 relative">
+                                      <input
+                                        type="number"
+                                        placeholder="Enter minutes"
+                                        value={customTimerDuration}
+                                        onChange={(e) => {
+                                          // Only allow numbers and trim leading zeros
+                                          const value = e.target.value.replace(/^0+/, '');
+                                          setCustomTimerDuration(value);
+                                        }}
+                                        className="w-full px-4 py-3 text-center text-lg font-medium border-2 border-pink-200 rounded-xl focus:ring-2 focus:ring-pink-400 focus:border-pink-400 transition-all duration-300 bg-white/80 backdrop-blur-sm placeholder-pink-300"
+                                        min="1"
+                                        max="1440"
+                                        autoFocus
+                                      />
+                                      {/* 
+                                        The "min" label is hidden on mobile devices for a cleaner UI.
+                                      */}
+                                      <div className="absolute right-10 top-1/2 transform -translate-y-1/2 text-pink-400 text-sm font-medium hidden md:block">
+                                        min
+                                      </div>
+                                    </div>
+                                    <motion.button
+                                      whileHover={{ scale: customTimerDuration && Number(customTimerDuration) > 0 ? 1.05 : 1 }}
+                                      whileTap={{ scale: customTimerDuration && Number(customTimerDuration) > 0 ? 0.95 : 1 }}
+                                      onClick={() => {
+                                        const duration = Number(customTimerDuration);
+                                        if (duration && duration > 0 && duration <= 1440) {
+                                          breastfeedingTimer.startTimer(duration * 60);
+                                          setCustomTimerDuration('');
+                                          setShowCustomDurationInput(false); // Hide input after starting timer
+                                        }
+                                      }}
+                                      disabled={
+                                        !customTimerDuration ||
+                                        isNaN(Number(customTimerDuration)) ||
+                                        Number(customTimerDuration) <= 0 ||
+                                        Number(customTimerDuration) > 1440
+                                      }
+                                      className={`px-6 py-3 rounded-xl font-medium text-sm transition-all duration-300 ${
+                                        customTimerDuration &&
+                                        !isNaN(Number(customTimerDuration)) &&
+                                        Number(customTimerDuration) > 0 &&
+                                        Number(customTimerDuration) <= 1440
+                                          ? 'bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600 text-white shadow-lg hover:shadow-xl'
+                                          : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                                      }`}
+                                    >
+                                      <div className="flex items-center gap-2">
+                                        {customTimerDuration &&
+                                          !isNaN(Number(customTimerDuration)) &&
+                                          Number(customTimerDuration) > 0 &&
+                                          Number(customTimerDuration) <= 1440 && (
+                                            <Check className="w-4 h-4" />
+                                        )}
+                                        {customTimerDuration &&
+                                          !isNaN(Number(customTimerDuration)) &&
+                                          Number(customTimerDuration) > 0 &&
+                                          Number(customTimerDuration) <= 1440
+                                          ? `Start ${customTimerDuration} min`
+                                          : 'Start'}
+                                      </div>
+                                    </motion.button>
+                                  </div>
+                                </motion.div>
+                              )}
+                            </AnimatePresence>
+                          </div>
+                        </div>
+                      </motion.div>
+                    ) : null}
+                  </AnimatePresence>
                   
                   <div className="flex justify-center gap-3 mb-6 flex-wrap">
                     {!breastfeedingTimer.isRunning ? (
                       <>
-                        <motion.button
-                          whileHover={{ scale: 1.05 }}
-                          whileTap={{ scale: 0.95 }}
-                          onClick={breastfeedingTimer.startStopwatch}
-                          className="flex items-center gap-2 bg-gradient-to-r from-pink-400 to-pink-500 hover:from-pink-500 hover:to-pink-600 text-white px-6 py-3 rounded-full shadow-lg font-medium"
-                        >
-                          <Play className="w-5 h-5" />
-                          Start Stopwatch
-                        </motion.button>
+                        {breastfeedingTimer.mode === 'stopwatch' && (
+                          <motion.button
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                            onClick={breastfeedingTimer.startStopwatch}
+                            className="flex items-center gap-2 bg-gradient-to-r from-pink-500 to-pink-600 hover:from-pink-600 hover:to-pink-700 text-white px-6 py-3 rounded-full shadow-lg hover:shadow-xl font-medium transform hover:-translate-y-0.5 transition-all duration-200"
+                          >
+                            <Play className="w-5 h-5" />
+                            Start Stopwatch
+                          </motion.button>
+                        )}
                         {breastfeedingTimer.time > 0 && breastfeedingTimer.mode === 'countdown' && (
                           <motion.button
                             whileHover={{ scale: 1.05 }}
                             whileTap={{ scale: 0.95 }}
                             onClick={breastfeedingTimer.resume}
-                            className="flex items-center gap-2 bg-gradient-to-r from-green-400 to-green-500 hover:from-green-500 hover:to-green-600 text-white px-6 py-3 rounded-full shadow-lg font-medium"
+                            className="flex items-center gap-2 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white px-6 py-3 rounded-full shadow-lg hover:shadow-xl font-medium transform hover:-translate-y-0.5 transition-all duration-200"
                           >
                             <Play className="w-5 h-5" />
                             Resume Timer
@@ -611,7 +775,7 @@ export default function Home() {
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
                         onClick={breastfeedingTimer.pause}
-                        className="flex items-center gap-2 bg-gradient-to-r from-red-400 to-red-500 hover:from-red-500 hover:to-red-600 text-white px-6 py-3 rounded-full shadow-lg font-medium"
+                        className="flex items-center gap-2 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white px-6 py-3 rounded-full shadow-lg hover:shadow-xl font-medium transform hover:-translate-y-0.5 transition-all duration-200"
                       >
                         <Pause className="w-5 h-5" />
                         Pause
@@ -622,7 +786,7 @@ export default function Home() {
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
                       onClick={breastfeedingTimer.reset}
-                      className="flex items-center gap-2 bg-gray-200 hover:bg-gray-300 text-gray-700 px-6 py-3 rounded-full shadow-lg font-medium"
+                      className="flex items-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-700 px-6 py-3 rounded-full shadow-md hover:shadow-lg font-medium transition-all duration-200"
                     >
                       <RotateCcw className="w-5 h-5" />
                       Reset
@@ -633,7 +797,7 @@ export default function Home() {
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
                         onClick={completeBreastfeeding}
-                        className="flex items-center gap-2 bg-gradient-to-r from-green-400 to-green-500 hover:from-green-500 hover:to-green-600 text-white px-6 py-3 rounded-full shadow-lg font-medium"
+                        className="flex items-center gap-2 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white px-6 py-3 rounded-full shadow-lg hover:shadow-xl font-medium transform hover:-translate-y-0.5 transition-all duration-200"
                       >
                         <Save className="w-5 h-5" />
                         Complete
@@ -651,7 +815,7 @@ export default function Home() {
                     placeholder="Any notes about this feeding session..."
                     value={notes}
                     onChange={(e) => setNotes(e.target.value)}
-                    className="w-full p-3 border border-gray-200 rounded-lg resize-none focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                    className="w-full p-3 border border-gray-200 rounded-xl resize-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500 bg-white shadow-sm transition-all duration-200"
                     rows={3}
                   />
                 </div>
@@ -681,12 +845,10 @@ export default function Home() {
                   {/* Small Decorative Bottle */}
                   <div className="flex justify-center mb-4">
                     <AnimatedMilkBottleTimer
-                      duration={100}
-                      currentTime={bottleAmount ? Math.min(parseFloat(bottleAmount) || 0, 100) : 0}
-                      isActive={false}
+                      mode="stopwatch"
+                      isRunning={false}
                       size="small"
                       theme="bottle"
-                      drainRate={100}
                     />
                   </div>
                   {/* Unit Toggle */}
@@ -735,7 +897,7 @@ export default function Home() {
                             whileHover={{ scale: 1.05 }}
                             whileTap={{ scale: 0.95 }}
                             onClick={() => setBottleAmount(displayValue.toString())}
-                            className="p-3 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg font-medium transition-all duration-200 border-2 border-transparent hover:border-blue-200"
+                            className="p-3 bg-gradient-to-br from-blue-50 to-blue-100 hover:from-blue-100 hover:to-blue-200 text-blue-700 rounded-xl font-medium transition-all duration-200 border border-blue-200 hover:border-blue-300 shadow-sm hover:shadow-md"
                           >
                             {displayLabel}
                           </motion.button>
@@ -755,7 +917,7 @@ export default function Home() {
                         placeholder={`Enter amount in ${bottleUnit}...`}
                         value={bottleAmount}
                         onChange={(e) => setBottleAmount(e.target.value)}
-                        className="w-full p-3 text-center text-lg border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent pr-12"
+                        className="w-full p-3 text-center text-lg border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 pr-12 bg-white shadow-sm transition-all duration-200"
                         step="0.1"
                       />
                       <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 font-medium">
@@ -781,21 +943,21 @@ export default function Home() {
                       placeholder="Any notes about this feeding..."
                       value={notes}
                       onChange={(e) => setNotes(e.target.value)}
-                      className="w-full p-3 border border-gray-200 rounded-lg resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full p-3 border border-gray-200 rounded-xl resize-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white shadow-sm transition-all duration-200"
                       rows={3}
                     />
                   </div>
 
                   {/* Record Button */}
                   <motion.button
-                    whileHover={{ scale: bottleAmount ? 1.05 : 1 }}
-                    whileTap={{ scale: bottleAmount ? 0.95 : 1 }}
+                    whileHover={{ scale: bottleAmount ? 1.02 : 1 }}
+                    whileTap={{ scale: bottleAmount ? 0.98 : 1 }}
                     onClick={recordBottleFeeding}
                     disabled={!bottleAmount}
-                    className={`w-full flex items-center justify-center gap-2 py-3 rounded-lg font-medium shadow-lg transition-all duration-200 ${
+                    className={`w-full flex items-center justify-center gap-2 py-3 rounded-xl font-medium shadow-lg transition-all duration-200 ${
                       bottleAmount
-                        ? 'bg-gradient-to-r from-blue-400 to-blue-500 hover:from-blue-500 hover:to-blue-600 text-white'
-                        : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                        ? 'bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white hover:shadow-xl transform hover:-translate-y-0.5'
+                        : 'bg-gray-100 text-gray-400 cursor-not-allowed'
                     }`}
                   >
                     <Milk className="w-5 h-5" />
@@ -824,6 +986,40 @@ export default function Home() {
                   </div>
                 </div>
 
+                {/* Mode Toggle for Sleeping */}
+                <div className="flex justify-center mb-6">
+                  <div className="flex items-center bg-white rounded-full p-1 shadow-sm border border-gray-200">
+                    <button
+                      onClick={() => {
+                        sleepingTimer.setStopwatchMode();
+                        setSleepStartTime(null);
+                      }}
+                      className={`flex items-center gap-2 px-4 py-2 rounded-full font-medium transition-all duration-200 ${
+                        sleepingTimer.mode === 'stopwatch'
+                          ? 'bg-purple-500 text-white shadow-sm'
+                          : 'text-gray-600 hover:text-purple-600 hover:bg-purple-50'
+                      }`}
+                    >
+                      <Watch className="w-4 h-4" />
+                      <span className="text-sm">Stopwatch</span>
+                    </button>
+                    <button
+                      onClick={() => {
+                        sleepingTimer.setTimerMode();
+                        setSleepStartTime(null);
+                      }}
+                      className={`flex items-center gap-2 px-4 py-2 rounded-full font-medium transition-all duration-200 ${
+                        sleepingTimer.mode === 'countdown'
+                          ? 'bg-purple-500 text-white shadow-sm'
+                          : 'text-gray-600 hover:text-purple-600 hover:bg-purple-50'
+                      }`}
+                    >
+                      <Timer className="w-4 h-4" />
+                      <span className="text-sm">Timer</span>
+                    </button>
+                  </div>
+                </div>
+
                 {/* Animated Sleep Timer */}
                 <div className="text-center">
                   <div className="flex flex-col items-center mb-6">
@@ -834,16 +1030,28 @@ export default function Home() {
                       className="mb-4 opacity-80"
                     >
                       <AnimatedMilkBottleTimer
-                        duration={sleepingTimer.mode === 'countdown' ? sleepingTimer.initialTimeMs / 1000 : 60}
-                        currentTime={sleepingTimer.elapsedTime}
-                        isActive={sleepingTimer.isRunning}
+                        mode={sleepingTimer.mode}
+                        initialDuration={sleepingTimer.mode === 'countdown' ? sleepingTimer.initialTimeMs : undefined}
+                        isRunning={sleepingTimer.isRunning}
+                        onComplete={() => {
+                          if (sleepingTimer.mode === 'countdown') {
+                            // Timer completed - trigger completion effects  
+                            playNotificationSound();
+                            triggerHapticFeedback();
+                            showBrowserNotification(
+                              'Sleep Timer Complete! 😴',
+                              'Time to check on baby!'
+                            );
+                            toast.success(`Sleep timer completed! 😴`, {
+                              duration: 3000,
+                              position: 'top-center',
+                            });
+                          }
+                        }}
                         size="medium"
                         theme="sleeping"
-                        drainRate={sleepingTimer.mode === 'countdown' ? sleepingTimer.initialTimeMs / 1000 : 60}
                       />
-                    </motion.div>
-                    
-                    {/* Time Display */}
+                    </motion.div>                    {/* Time Display */}
                     <div className="text-4xl font-mono font-bold bg-gradient-to-r from-purple-400 to-indigo-500 bg-clip-text text-transparent mb-2">
                       {sleepingTimer.formatTime(sleepingTimer.timeMs)}
                     </div>
@@ -855,76 +1063,138 @@ export default function Home() {
                     </div>
                   </div>
 
-                  {/* Sleep Timer Presets */}
-                  <div className="mb-6">
-                    <label className="text-sm font-medium text-gray-700 mb-3 block">
-                      Sleep Timer Presets
-                    </label>
-                    <div className="grid grid-cols-3 gap-2 mb-4">
-                      {TIMER_PRESETS.map((preset) => (
+                  {/* Sleep Timer Presets - Only show in countdown mode */}
+                  {sleepingTimer.mode === 'countdown' && (
+                    <div className="mb-6">
+                      <label className="text-sm font-medium text-gray-700 mb-3 block">
+                        Sleep Timer Presets
+                      </label>
+                      <div className="grid grid-cols-3 gap-2 mb-4">
+                        {TIMER_PRESETS.map((preset) => (
+                          <motion.button
+                            key={preset.value}
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                            onClick={() => sleepingTimer.startTimer(preset.value)}
+                            className="p-3 bg-gradient-to-br from-purple-50 to-indigo-100 hover:from-purple-100 hover:to-indigo-200 text-purple-700 rounded-xl font-medium transition-all duration-200 border border-purple-200 hover:border-purple-300 text-sm shadow-sm hover:shadow-md"
+                          >
+                            {preset.label}
+                          </motion.button>
+                        ))}
+                      </div>
+                      
+                      {/* Custom Sleep Timer Input with Collapsible Design */}
+                      <div className="max-w-xs mx-auto space-y-3">
                         <motion.button
-                          key={preset.value}
-                          whileHover={{ scale: 1.05 }}
-                          whileTap={{ scale: 0.95 }}
-                          onClick={() => sleepingTimer.startTimer(preset.value)}
-                          className="p-2 bg-purple-50 hover:bg-purple-100 text-purple-700 rounded-lg font-medium transition-all duration-200 border-2 border-transparent hover:border-purple-200 text-sm"
+                          whileHover={{ scale: 1.02 }}
+                          whileTap={{ scale: 0.98 }}
+                          onClick={() => setShowCustomSleepDurationInput(!showCustomSleepDurationInput)}
+                          className="text-xs font-medium text-purple-600 flex items-center gap-1 hover:text-purple-700 transition-colors duration-200 cursor-pointer"
                         >
-                          {preset.label}
+                          <motion.div
+                            animate={{ rotate: showCustomSleepDurationInput ? 45 : 0 }}
+                            transition={{ duration: 0.2 }}
+                          >
+                            <Plus className="w-3 h-3" />
+                          </motion.div>
+                          Custom Duration
                         </motion.button>
-                      ))}
+                        
+                        <AnimatePresence>
+                          {showCustomSleepDurationInput && (
+                            <motion.div
+                              initial={{ opacity: 0, height: 0, y: -10 }}
+                              animate={{ opacity: 1, height: 'auto', y: 0 }}
+                              exit={{ opacity: 0, height: 0, y: -10 }}
+                              transition={{ duration: 0.3, ease: 'easeInOut' }}
+                              className="overflow-hidden space-y-3"
+                            >
+                              <div className="relative">
+                                <input
+                                  type="number"
+                                  placeholder="Enter minutes"
+                                  value={customTimerDuration}
+                                  onChange={(e) => {
+                                    const value = e.target.value.replace(/^0+/, '');
+                                    setCustomTimerDuration(value);
+                                  }}
+                                  className="w-full px-4 py-3 text-center text-lg font-medium border-2 border-purple-200 rounded-xl focus:ring-2 focus:ring-purple-400 focus:border-purple-400 transition-all duration-300 bg-white/80 backdrop-blur-sm placeholder-purple-300"
+                                  min="1"
+                                  max="1440"
+                                  autoFocus
+                                />
+                                <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-purple-400 text-sm font-medium">
+                                  min
+                                </div>
+                              </div>
+                              <motion.button
+                                whileHover={{ scale: customTimerDuration && Number(customTimerDuration) > 0 ? 1.02 : 1 }}
+                                whileTap={{ scale: customTimerDuration && Number(customTimerDuration) > 0 ? 0.98 : 1 }}
+                                onClick={() => {
+                                  const duration = Number(customTimerDuration);
+                                  if (duration && duration > 0 && duration <= 1440) {
+                                    sleepingTimer.startTimer(duration * 60);
+                                    setCustomTimerDuration('');
+                                    setShowCustomSleepDurationInput(false);
+                                  }
+                                }}
+                                disabled={
+                                  !customTimerDuration ||
+                                  isNaN(Number(customTimerDuration)) ||
+                                  Number(customTimerDuration) <= 0 ||
+                                  Number(customTimerDuration) > 1440
+                                }
+                                className={`w-full px-4 py-3 rounded-xl font-medium text-sm transition-all duration-300 ${
+                                  customTimerDuration &&
+                                  !isNaN(Number(customTimerDuration)) &&
+                                  Number(customTimerDuration) > 0 &&
+                                  Number(customTimerDuration) <= 1440
+                                    ? 'bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 text-white shadow-lg hover:shadow-xl'
+                                    : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                                }`}
+                              >
+                                <div className="flex items-center justify-center gap-2">
+                                  {customTimerDuration &&
+                                    !isNaN(Number(customTimerDuration)) &&
+                                    Number(customTimerDuration) > 0 &&
+                                    Number(customTimerDuration) <= 1440 && (
+                                      <Check className="w-4 h-4" />
+                                  )}
+                                  {customTimerDuration &&
+                                    !isNaN(Number(customTimerDuration)) &&
+                                    Number(customTimerDuration) > 0 &&
+                                    Number(customTimerDuration) <= 1440
+                                    ? `Start ${customTimerDuration} min`
+                                    : 'Start Sleep Timer'}
+                                </div>
+                              </motion.button>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </div>
                     </div>
-                    
-                    {/* Custom Sleep Timer Input */}
-                    <div className="flex gap-2">
-                      <input
-                        type="number"
-                        placeholder="Custom minutes"
-                        value={customTimerDuration}
-                        onChange={(e) => setCustomTimerDuration(e.target.value)}
-                        className="flex-1 p-2 text-center border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm"
-                        min="1"
-                        max="1440"
-                      />
-                      <motion.button
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                        onClick={() => {
-                          const duration = parseInt(customTimerDuration);
-                          if (duration && duration > 0) {
-                            sleepingTimer.startTimer(duration * 60);
-                            setCustomTimerDuration('');
-                          }
-                        }}
-                        disabled={!customTimerDuration || parseInt(customTimerDuration) <= 0}
-                        className={`px-4 py-2 rounded-lg font-medium text-sm ${
-                          customTimerDuration && parseInt(customTimerDuration) > 0
-                            ? 'bg-purple-500 hover:bg-purple-600 text-white'
-                            : 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                        }`}
-                      >
-                        Start Sleep Timer
-                      </motion.button>
-                    </div>
-                  </div>
+                  )}
                   
                   <div className="flex justify-center gap-3 mb-6 flex-wrap">
                     {!sleepingTimer.isRunning ? (
                       <>
-                        <motion.button
-                          whileHover={{ scale: 1.05 }}
-                          whileTap={{ scale: 0.95 }}
-                          onClick={startSleeping}
-                          className="flex items-center gap-2 bg-gradient-to-r from-purple-400 to-indigo-500 hover:from-purple-500 hover:to-indigo-600 text-white px-6 py-3 rounded-full shadow-lg font-medium"
-                        >
-                          <Play className="w-5 h-5" />
-                          Start Stopwatch
-                        </motion.button>
+                        {sleepingTimer.mode === 'stopwatch' && (
+                          <motion.button
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                            onClick={startSleeping}
+                            className="flex items-center gap-2 bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 text-white px-6 py-3 rounded-full shadow-lg hover:shadow-xl font-medium transform hover:-translate-y-0.5 transition-all duration-200"
+                          >
+                            <Play className="w-5 h-5" />
+                            Start Stopwatch
+                          </motion.button>
+                        )}
                         {sleepingTimer.time > 0 && sleepingTimer.mode === 'countdown' && (
                           <motion.button
                             whileHover={{ scale: 1.05 }}
                             whileTap={{ scale: 0.95 }}
                             onClick={sleepingTimer.resume}
-                            className="flex items-center gap-2 bg-gradient-to-r from-green-400 to-green-500 hover:from-green-500 hover:to-green-600 text-white px-6 py-3 rounded-full shadow-lg font-medium"
+                            className="flex items-center gap-2 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white px-6 py-3 rounded-full shadow-lg hover:shadow-xl font-medium transform hover:-translate-y-0.5 transition-all duration-200"
                           >
                             <Play className="w-5 h-5" />
                             Resume Timer
@@ -936,7 +1206,7 @@ export default function Home() {
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
                         onClick={sleepingTimer.pause}
-                        className="flex items-center gap-2 bg-gradient-to-r from-red-400 to-red-500 hover:from-red-500 hover:to-red-600 text-white px-6 py-3 rounded-full shadow-lg font-medium"
+                        className="flex items-center gap-2 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white px-6 py-3 rounded-full shadow-lg hover:shadow-xl font-medium transform hover:-translate-y-0.5 transition-all duration-200"
                       >
                         <Pause className="w-5 h-5" />
                         Pause
@@ -950,7 +1220,7 @@ export default function Home() {
                         sleepingTimer.reset();
                         setSleepStartTime(null);
                       }}
-                      className="flex items-center gap-2 bg-gray-200 hover:bg-gray-300 text-gray-700 px-6 py-3 rounded-full shadow-lg font-medium"
+                      className="flex items-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-700 px-6 py-3 rounded-full shadow-md hover:shadow-lg font-medium transition-all duration-200"
                     >
                       <RotateCcw className="w-5 h-5" />
                       Reset
@@ -961,7 +1231,7 @@ export default function Home() {
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
                         onClick={completeSleeping}
-                        className="flex items-center gap-2 bg-gradient-to-r from-green-400 to-green-500 hover:from-green-500 hover:to-green-600 text-white px-6 py-3 rounded-full shadow-lg font-medium"
+                        className="flex items-center gap-2 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white px-6 py-3 rounded-full shadow-lg hover:shadow-xl font-medium transform hover:-translate-y-0.5 transition-all duration-200"
                       >
                         <Save className="w-5 h-5" />
                         Wake Up
@@ -979,7 +1249,7 @@ export default function Home() {
                     placeholder="Any notes about this sleep session..."
                     value={notes}
                     onChange={(e) => setNotes(e.target.value)}
-                    className="w-full p-3 border border-gray-200 rounded-lg resize-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                    className="w-full p-3 border border-gray-200 rounded-xl resize-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 bg-white shadow-sm transition-all duration-200"
                     rows={3}
                   />
                 </div>
