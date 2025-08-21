@@ -2,6 +2,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { Baby, Milk } from 'lucide-react';
 import { MilkBottleSticker } from '../UI/MilkBottleSticker';
+import { UserMenu } from '../auth/user-menu';
 
 interface PageHeaderProps {
   isClient: boolean;
@@ -37,6 +38,11 @@ export const PageHeader = React.memo(({ isClient }: PageHeaderProps) => {
           ))}
         </div>
       )}
+
+      {/* User Menu */}
+      <div className="relative z-20 flex justify-end p-4">
+        <UserMenu />
+      </div>
 
       {/* Header */}
       <motion.div

@@ -1,0 +1,48 @@
+import { createAuthClient } from "better-auth/react";
+import type { auth } from "./auth";
+
+// Debug: Log the base URL being used
+console.log("Auth client base URL:", process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000");
+
+export const authClient = createAuthClient({
+    baseURL: process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000",
+    fetchOptions: {
+        onError(context) {
+            console.error("Auth client error details:", {
+                error: context.error,
+                response: context.response,
+                request: context.request,
+                status: context.response?.status,
+                statusText: context.response?.statusText,
+                url: context.request?.url,
+            });
+            
+            // Don't try to read response body as it may already be consumed
+            // The error details above should be sufficient for debugging
+        },
+        onSuccess(context) {
+            console.log("Auth operation successful:", {
+                status: context.response.status,
+                url: context.request.url,
+            });
+        },
+        onRequest(context) {
+            console.log("Auth request:", {
+                url: context.url,
+                method: context.method || 'GET',
+            });
+        }
+    }
+});
+
+export const {
+    signIn,
+    signOut,
+    signUp,
+    useSession,
+    resetPassword,
+    forgetPassword
+} = authClient;
+
+// Type definitions for better TypeScript support
+export type Session = typeof auth.$Infer.Session;

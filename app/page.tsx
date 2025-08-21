@@ -2,7 +2,6 @@
 
 import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Toaster } from 'react-hot-toast';
 import { Baby, Milk, Moon } from 'lucide-react';
 import Image from 'next/image';
 
@@ -295,8 +294,6 @@ export default function Home() {
         }}
       />
 
-      {/* Toast Notifications */}
-      <Toaster position="top-center" />
     </div>
   );
 }
