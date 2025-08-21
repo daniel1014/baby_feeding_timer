@@ -2,6 +2,7 @@
 
 import React from 'react'
 import { motion, type Transition, type Easing } from 'framer-motion'
+import Image from 'next/image'
 
 interface AnimatedMilkBottleTimerProps {
   mode: 'stopwatch' | 'countdown'
@@ -190,11 +191,11 @@ export default function AnimatedMilkBottleTimer({
   const liquidHeight = bodyHeight * (fillPercentage / 100);
   const liquidY = bodyBottomY - liquidHeight;
   
-  // Size configurations
+  // Size configurations - adjusted for better spacing
   const sizeConfig = {
-    small: { width: 120, height: 200 },
-    medium: { width: 170, height: 280 },
-    large: { width: 220, height: 360 }
+    small: { width: 100, height: 160 },
+    medium: { width: 140, height: 220 },
+    large: { width: 180, height: 280 }
   }
   
   const config = sizeConfig[size]
@@ -313,6 +314,23 @@ export default function AnimatedMilkBottleTimer({
     )
   }
 
+  // Render sleeping image or bottle based on theme
+  if (theme === 'sleeping') {
+    return (
+      <div className="flex items-center justify-center">
+        <Image
+          src="/baby_sleeping.png"
+          alt="Baby sleeping peacefully"
+          width={config.width}
+          height={config.height}
+          className="w-full h-full object-contain"
+          priority
+        />
+      </div>
+    );
+  }
+
+  // Render animated bottle for other themes
   return (
     <div className="relative flex items-center justify-center">
       <div 
@@ -331,7 +349,6 @@ export default function AnimatedMilkBottleTimer({
           <BottleSVGOutlinePaths />
         </svg>
         
-        
         {/* Enhanced cute face animation */}
         {isRunning && (
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
@@ -341,7 +358,7 @@ export default function AnimatedMilkBottleTimer({
                 rotate: [0, 1, -1, 0]
               }}
               transition={{ 
-                duration: theme === 'sleeping' ? 4 : 2.5, 
+                duration: 2.5, 
                 repeat: Infinity,
                 ease: "easeInOut"
               }}
@@ -357,8 +374,7 @@ export default function AnimatedMilkBottleTimer({
                 The minimal change is to use `ease: "easeInOut"` as an array, which is accepted by Framer Motion.
               */}
               {(() => {
-                const isSleeping = theme === 'sleeping';
-                const duration = isSleeping ? 5 : 3;
+                const duration = 3;
                 // Use string literal for ease to satisfy Framer Motion's type
                 const sharedTransition: Transition = {
                   duration,
@@ -377,16 +393,16 @@ export default function AnimatedMilkBottleTimer({
                       transition={sharedTransition}
                     >
                       <div 
-                        className={`w-2 h-2 ${theme === 'sleeping' ? 'bg-purple-600' : theme === 'breastfeeding' ? 'bg-pink-600' : 'bg-blue-600'} rounded-full relative`}
+                        className={`w-2 h-2 ${theme === 'breastfeeding' ? 'bg-pink-600' : 'bg-blue-600'} rounded-full relative`}
                       />
                       <div 
-                        className={`w-2 h-2 ${theme === 'sleeping' ? 'bg-purple-600' : theme === 'breastfeeding' ? 'bg-pink-600' : 'bg-blue-600'} rounded-full relative`}
+                        className={`w-2 h-2 ${theme === 'breastfeeding' ? 'bg-pink-600' : 'bg-blue-600'} rounded-full relative`}
                       />
                     </motion.div>
                     
                     {/* Mouth */}
                     <motion.div
-                      className={`w-4 h-2 border-2 ${theme === 'sleeping' ? 'border-purple-500' : theme === 'breastfeeding' ? 'border-pink-500' : 'border-blue-500'} rounded-b-full border-t-0`}
+                      className={`w-4 h-2 border-2 ${theme === 'breastfeeding' ? 'border-pink-500' : 'border-blue-500'} rounded-b-full border-t-0`}
                       animate={{ 
                         scaleX: [1.5, 1.2, 1.5],
                         scaleY: [1, 0.8, 1]

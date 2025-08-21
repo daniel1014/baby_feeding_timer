@@ -108,15 +108,8 @@ export const TimerPanel = React.memo(({
       {/* Animated Timer Display */}
       <div className="text-center">
         <div className="flex flex-col items-center mb-6">
-          {/* Animated Milk Bottle */}
-          <motion.div
-            animate={{ scale: timer.isRunning ? [1, 1.02, 1] : 1 }}
-            transition={{ 
-              duration: theme === 'sleeping' ? 3 : 2, 
-              repeat: timer.isRunning ? Infinity : 0 
-            }}
-            className={`mb-4 ${theme === 'sleeping' ? 'opacity-80' : ''}`}
-          >
+          {/* Timer Display Component */}
+          <div className="mb-4">
             <AnimatedMilkBottleTimer
               mode={timer.mode}
               initialDuration={timer.mode === 'countdown' ? timer.initialTimeMs : undefined}
@@ -125,7 +118,7 @@ export const TimerPanel = React.memo(({
               size="medium"
               theme={theme}
             />
-          </motion.div>
+          </div>
           
           {/* Time Display */}
           <div className={`text-4xl font-mono font-bold bg-gradient-to-r ${colors.primary} bg-clip-text text-transparent mb-2`}>
