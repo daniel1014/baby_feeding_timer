@@ -1,7 +1,7 @@
 "use client"
 
 import React from 'react'
-import { motion } from 'framer-motion'
+import { motion, type Transition, type Easing } from 'framer-motion'
 
 interface AnimatedMilkBottleTimerProps {
   mode: 'stopwatch' | 'countdown'
@@ -102,20 +102,8 @@ export default function AnimatedMilkBottleTimer({
           return;
         }
       } else {
-        // Stopwatch mode - check for 2-minute completion
-        const stopwatchDuration = 120000; // 2 minutes
+        // Stopwatch mode - runs indefinitely until manually stopped
         setElapsedMs(() => Math.round(elapsed));
-        
-        // Check for stopwatch completion at 2 minutes
-        if (elapsed >= stopwatchDuration) {
-          if (!hasCompletedRef.current) {
-            hasCompletedRef.current = true;
-            onCompleteRef.current?.();
-            console.log('Stopwatch completed 2 minutes!');
-          }
-          
-          // Continue running but mark as completed
-        }
       }
       
       // Schedule next frame and capture the id immediately
@@ -186,9 +174,13 @@ export default function AnimatedMilkBottleTimer({
     const progress = Math.min(elapsedMs / stopwatchDuration, 1);
     fillPercentage = Math.max((1 - progress) * 100, 0);
   } else {
-    // Countdown: drain from 100% to 0%
-    const progress = Math.min(elapsedMs / initialDuration, 1);
-    fillPercentage = Math.max((1 - progress) * 100, 0);
+    // Countdown: start with full liquid (100%) when not running, then drain from 100% to 0%
+    if (elapsedMs === 0 && !isRunning) {
+      fillPercentage = 100; // Show full liquid when countdown timer is ready/reset
+    } else {
+      const progress = Math.min(elapsedMs / initialDuration, 1);
+      fillPercentage = Math.max((1 - progress) * 100, 0);
+    }
   }
   
   // Correct liquid positioning - full bottle should reach near the neck
@@ -339,41 +331,73 @@ export default function AnimatedMilkBottleTimer({
           <BottleSVGOutlinePaths />
         </svg>
         
-        {/* Timer display */}
-        <div className="absolute bottom-8 left-0 right-0 text-center">
-          <div className="text-2xl font-bold text-gray-700">
-            {Math.floor(elapsedSeconds / 60).toString().padStart(2, '0')}:
-            {Math.floor(elapsedSeconds % 60).toString().padStart(2, '0')}
-          </div>
-          <div className="text-xs text-gray-500 mt-1">
-            {mode === 'stopwatch' ? 'Elapsed' : `${Math.max((initialDuration - elapsedMs) / 1000, 0).toFixed(0)}s remaining`}
-          </div>
-        </div>
         
-        {/* Cute face animation */}
+        {/* Enhanced cute face animation */}
         {isRunning && (
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
             <motion.div
-              animate={{ scale: [1, 1.05, 1] }}
-              transition={{ duration: 2, repeat: Infinity }}
-              className="text-center"
+              animate={{ 
+                scale: [1, 1.08, 1],
+                rotate: [0, 1, -1, 0]
+              }}
+              transition={{ 
+                duration: theme === 'sleeping' ? 4 : 2.5, 
+                repeat: Infinity,
+                ease: "easeInOut"
+              }}
+              className="text-center relative"
               style={{ 
-                marginTop: `${config.height * 0.15}px`,
-                marginLeft: `${config.width * 0.02}px`
+                marginTop: `${config.height * 0.18}px`,
+                marginLeft: `${config.width * 0.05}px`
               }}
             >
-              <div className="flex gap-2 justify-center mb-1">
-                <motion.div 
-                  className="w-1 h-1 bg-gray-700 rounded-full"
-                  animate={{ scaleY: [1, 0.1, 1] }}
-                  transition={{ duration: 3, repeat: Infinity }}
-                />
-                <motion.div 
-                  className="w-1 h-1 bg-gray-700 rounded-full"
-                  animate={{ scaleY: [1, 0.1, 1] }}
-                  transition={{ duration: 3, repeat: Infinity, delay: 0.1 }}
-                />
-              </div>
+              {/* 
+                To keep the eye and mouth animation transitions in sync, 
+                we use a shared transition object, but with the correct Framer Motion type for `ease`.
+                The minimal change is to use `ease: "easeInOut"` as an array, which is accepted by Framer Motion.
+              */}
+              {(() => {
+                const isSleeping = theme === 'sleeping';
+                const duration = isSleeping ? 5 : 3;
+                // Use string literal for ease to satisfy Framer Motion's type
+                const sharedTransition: Transition = {
+                  duration,
+                  repeat: Infinity,
+                  ease: "easeInOut" as Easing
+                };
+                return (
+                  <>
+                    {/* Eye */}
+                    <motion.div
+                      className="flex gap-3 justify-center mb-2"
+                      animate={{ 
+                        scaleY: [1, 0.1, 1],
+                        scaleX: [1, 1, 1]
+                      }}
+                      transition={sharedTransition}
+                    >
+                      <div 
+                        className={`w-2 h-2 ${theme === 'sleeping' ? 'bg-purple-600' : theme === 'breastfeeding' ? 'bg-pink-600' : 'bg-blue-600'} rounded-full relative`}
+                      />
+                      <div 
+                        className={`w-2 h-2 ${theme === 'sleeping' ? 'bg-purple-600' : theme === 'breastfeeding' ? 'bg-pink-600' : 'bg-blue-600'} rounded-full relative`}
+                      />
+                    </motion.div>
+                    
+                    {/* Mouth */}
+                    <motion.div
+                      className={`w-4 h-2 border-2 ${theme === 'sleeping' ? 'border-purple-500' : theme === 'breastfeeding' ? 'border-pink-500' : 'border-blue-500'} rounded-b-full border-t-0`}
+                      animate={{ 
+                        scaleX: [1.5, 1.2, 1.5],
+                        scaleY: [1, 0.8, 1]
+                      }}
+                      transition={sharedTransition}
+                      style={{ marginLeft: '5px' }}
+                    />
+                  </>
+                );
+              })()}
+            
             </motion.div>
           </div>
         )}
@@ -395,20 +419,6 @@ export default function AnimatedMilkBottleTimer({
               className="text-pink-400 text-sm"
             >
               💕
-            </motion.div>
-          </div>
-        )}
-        
-        {/* Completion celebration - works for both modes */}
-        {fillPercentage <= 0 && elapsedMs > 0 && (
-          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-            <motion.div
-              initial={{ scale: 0, opacity: 0 }}
-              animate={{ scale: [0, 1.2, 1], opacity: [0, 1, 1] }}
-              transition={{ duration: 0.6, ease: "backOut" }}
-              className="text-4xl"
-            >
-              {mode === 'countdown' ? '⏰' : '🍼'} ✨
             </motion.div>
           </div>
         )}
