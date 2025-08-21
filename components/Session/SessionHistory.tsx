@@ -22,6 +22,8 @@ export const SessionHistory = React.memo(({ sessions }: SessionHistoryProps) => 
         return <Milk className="w-4 h-4" />;
       case 'sleeping':
         return <Moon className="w-4 h-4" />;
+      case 'diaper':
+        return <Baby className="w-4 h-4" />;
       default:
         return <Baby className="w-4 h-4" />;
     }
@@ -35,6 +37,8 @@ export const SessionHistory = React.memo(({ sessions }: SessionHistoryProps) => 
         return 'Bottle Feeding';
       case 'sleeping':
         return 'Sleeping';
+      case 'diaper':
+        return 'Diaper';
       default:
         return 'Session';
     }
@@ -87,6 +91,17 @@ export const SessionHistory = React.memo(({ sessions }: SessionHistoryProps) => 
                       <span className="text-xs text-gray-400 ml-1">
                         ({ozToMl(session.amount)}ml)
                       </span>
+                    )}
+                  </div>
+                )}
+                {session.type === 'diaper' && (
+                  <div className="text-xs text-gray-600">
+                    {(session as any).diaperType}
+                    {((session as any).amount && (session as any).amount !== 'None') && ` • ${(session as any).amount}`}
+                    {((session as any).color && (session as any).color !== 'None') && ` • ${(session as any).color}`}
+                    {((session as any).texture && (session as any).texture !== 'None') && ` • ${(session as any).texture}`}
+                    {((session as any).openAirAccident || (session as any).diaperLeak) && (
+                      <span> • {[(session as any).openAirAccident ? 'Open Air Accident' : null, (session as any).diaperLeak ? 'Leak' : null].filter(Boolean).join(' & ')}</span>
                     )}
                   </div>
                 )}

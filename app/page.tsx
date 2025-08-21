@@ -4,11 +4,13 @@ import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Toaster } from 'react-hot-toast';
 import { Baby, Milk, Moon } from 'lucide-react';
+import Image from 'next/image';
 
 // Components
 import { PageHeader } from '../components/Layout/PageHeader';
 import { TimerPanel } from '../components/Timer/TimerPanel';
 import { BottleTab } from '../components/Session/BottleTab';
+import DiaperTab from '../components/Session/DiaperTab';
 import { SessionHistory } from '../components/Session/SessionHistory';
 import { ScripturePopup } from '../components/UI/ScripturePopup';
 
@@ -95,7 +97,7 @@ export default function Home() {
       <div className="relative z-10 max-w-4xl mx-auto px-4 py-6">
         {/* Tab Navigation */}
         <div className="flex bg-white rounded-xl p-1 shadow-xl border border-gray-100 mb-8 max-w-2xl mx-auto">
-          {(['breastfeeding', 'bottle', 'sleeping'] as SessionType[]).map((tabType) => {
+          {(['breastfeeding', 'bottle', 'sleeping', 'diaper'] as SessionType[]).map((tabType) => {
             const theme = TAB_THEMES[tabType];
             const isActive = activeTab === tabType;
             
@@ -114,15 +116,22 @@ export default function Home() {
                 {tabType === 'breastfeeding' && <Baby className="w-4 h-4" />}
                 {tabType === 'bottle' && <Milk className="w-4 h-4" />}
                 {tabType === 'sleeping' && <Moon className="w-4 h-4" />}
+                {tabType === 'diaper' && (
+                  <Image src="/diaper_baby.svg" alt="Diaper" width={16} height={16} />
+                )}
+                {/* larger screen only */}
                 <span className="hidden sm:inline">
                   {tabType === 'breastfeeding' && 'Breastfeeding'}
                   {tabType === 'bottle' && 'Bottle Feeding'}
                   {tabType === 'sleeping' && 'Sleeping'}
+                  {tabType === 'diaper' && 'Diaper'}
                 </span>
+                {/* mobile only */}
                 <span className="sm:hidden text-xs font-medium">
                   {tabType === 'breastfeeding' && 'Breast'}
                   {tabType === 'bottle' && 'Bottle'}
                   {tabType === 'sleeping' && 'Sleep'}
+                  {tabType === 'diaper' && 'Diaper'}
                 </span>
               </motion.button>
             );
@@ -217,6 +226,24 @@ export default function Home() {
                     rows={3}
                   />
                 </div>
+              </motion.div>
+            )}
+
+            {/* Diaper Tab */}
+            {activeTab === 'diaper' && (
+              <motion.div
+                key="diaper"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                className="space-y-6"
+              >
+                <DiaperTab
+                  currentTime={currentTime}
+                  onRecord={(input) => {
+                    sessionManager.recordDiaperChange(input);
+                  }}
+                />
               </motion.div>
             )}
           </AnimatePresence>

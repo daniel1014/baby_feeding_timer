@@ -55,7 +55,35 @@ export interface SleepingSession extends SessionBase {
   environment?: 'crib' | 'bassinet' | 'co-sleeping' | 'other';
 }
 
-export type FeedingSession = BreastfeedingSession | BottleFeedingSession | SleepingSession;
+export type DiaperAmount = 'None' | 'Light' | 'Medium' | 'Heavy';
+export type DiaperColor = 'None' | 'Black' | 'Bloody' | 'Brown' | 'Dark Brown' | 'Green' | 'White' | 'Yellow' | 'Yellow with Seeds';
+export type DiaperTexture = 'None' | 'Diarrhea' | 'Hard' | 'Normal' | 'Soft' | 'Very Hard' | 'Very Soft';
+export type DiaperMood = 'very_happy' | 'happy' | 'neutral' | 'sad' | 'crying';
+
+export interface DiaperSession extends SessionBase {
+  type: 'diaper';
+  diaperType: 'Wet' | 'Dirty' | 'Wet & Dirty' | 'Dry';
+  amount?: DiaperAmount;
+  color?: DiaperColor;
+  texture?: DiaperTexture;
+  mood?: DiaperMood;
+  openAirAccident?: boolean;
+  diaperLeak?: boolean;
+}
+
+export interface DiaperRecordInput {
+  dateTime: Date;
+  diaperType: 'Wet' | 'Dirty' | 'Wet & Dirty' | 'Dry';
+  amount?: DiaperAmount;
+  color?: DiaperColor;
+  texture?: DiaperTexture;
+  mood?: DiaperMood;
+  openAirAccident?: boolean;
+  diaperLeak?: boolean;
+  notes?: string;
+}
+
+export type FeedingSession = BreastfeedingSession | BottleFeedingSession | SleepingSession | DiaperSession;
 
 // Tab Theme Configuration
 export interface TabTheme {
@@ -66,7 +94,7 @@ export interface TabTheme {
   activeColor: string;
 }
 
-export type SessionType = 'breastfeeding' | 'bottle' | 'sleeping';
+export type SessionType = 'breastfeeding' | 'bottle' | 'sleeping' | 'diaper';
 
 export const TAB_THEMES: Record<SessionType, TabTheme> = {
   breastfeeding: {
@@ -89,6 +117,13 @@ export const TAB_THEMES: Record<SessionType, TabTheme> = {
     accent: 'text-purple-600',
     icon: '😴',
     activeColor: 'purple'
+  },
+  diaper: {
+    primary: 'from-rose-400 to-pink-500',
+    secondary: 'bg-rose-100 text-rose-700',
+    accent: 'text-rose-600',
+    icon: '🧷',
+    activeColor: 'rose'
   }
 };
 

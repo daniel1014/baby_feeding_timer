@@ -4,7 +4,9 @@ import {
   FeedingSession, 
   BreastfeedingSession, 
   BottleFeedingSession, 
-  SleepingSession 
+  SleepingSession,
+  DiaperSession,
+  DiaperRecordInput
 } from '../types';
 import { formatTime } from '../utils/timeFormatting';
 import { mlToOz } from '../utils/conversions';
@@ -15,6 +17,7 @@ export interface UseSessionManagerReturn {
   completeBreastfeeding: (timerTimeMs: number, notes?: string) => void;
   recordBottleFeeding: (amount: string, unit: 'ml' | 'oz', notes?: string) => void;
   completeSleeping: (timerTimeMs: number, notes?: string) => void;
+  recordDiaperChange: (input: DiaperRecordInput) => void;
 }
 
 export function useSessionManager(): UseSessionManagerReturn {
@@ -113,10 +116,32 @@ export function useSessionManager(): UseSessionManagerReturn {
     });
   }, []);
 
+  const recordDiaperChange = useCallback((input: DiaperRecordInput) => {
+    const { dateTime, notes, ...rest } = input;
+    const now = dateTime ?? new Date();
+    const session: DiaperSession = {
+      id: Date.now().toString(),
+      type: 'diaper',
+      startTime: now,
+      endTime: now,
+      date: now.toISOString().split('T')[0],
+      notes: notes || undefined,
+      ...rest
+    };
+
+    setSessions(prev => [session, ...prev]);
+
+    toast.success('Diaper change recorded 👶', {
+      duration: 3000,
+      position: 'top-center',
+    });
+  }, []);
+
   return {
     sessions,
     completeBreastfeeding,
     recordBottleFeeding,
-    completeSleeping
+    completeSleeping,
+    recordDiaperChange
   };
 }
