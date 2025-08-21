@@ -44,6 +44,7 @@ export default function Home() {
   const [isClient, setIsClient] = useState(false);
   const [sleepStartTime, setSleepStartTime] = useState<Date | null>(null);
   const [currentTime, setCurrentTime] = useState<Date | null>(null);
+  const [customSessionTime, setCustomSessionTime] = useState<Date | null>(null);
 
   // Initialize client-side state
   useEffect(() => {
@@ -88,6 +89,11 @@ export default function Home() {
     setSleepStartTime(new Date());
     sleepingTimer.startStopwatch();
   }, [sleepingTimer]);
+
+  const handleTimeChange = React.useCallback((newTime: Date) => {
+    setCustomSessionTime(newTime);
+    setCurrentTime(newTime);
+  }, []);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-pink-50 relative overflow-hidden">
@@ -155,6 +161,7 @@ export default function Home() {
                   theme="breastfeeding"
                   currentTime={currentTime}
                   onComplete={handleBreastfeedingComplete}
+                  onTimeChange={handleTimeChange}
                 />
 
                 {/* Notes Input */}
@@ -191,6 +198,7 @@ export default function Home() {
                   notes={notes}
                   setNotes={setNotes}
                   onRecord={handleBottleFeedingRecord}
+                  onTimeChange={handleTimeChange}
                 />
               </motion.div>
             )}
@@ -211,6 +219,7 @@ export default function Home() {
                   sleepStartTime={sleepStartTime}
                   onComplete={handleSleepingComplete}
                   onSleepStart={handleSleepStart}
+                  onTimeChange={handleTimeChange}
                 />
 
                 {/* Notes Input */}

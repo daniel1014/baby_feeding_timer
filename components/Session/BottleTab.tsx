@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Milk } from 'lucide-react';
 import AnimatedMilkBottleTimer from '../UI/AnimatedMilkBottleTimer';
-import { formatDate, formatTimeOfDay } from '../../utils/timeFormatting';
+import { DateTime } from '../UI/DateTime';
 import { mlToOz, ozToMl } from '../../utils/conversions';
 import { BOTTLE_PRESETS } from '../../types';
 
@@ -15,6 +15,7 @@ interface BottleTabProps {
   notes: string;
   setNotes: (notes: string) => void;
   onRecord: () => void;
+  onTimeChange?: (newTime: Date) => void;
 }
 
 export const BottleTab = React.memo(({
@@ -25,18 +26,22 @@ export const BottleTab = React.memo(({
   setBottleUnit,
   notes,
   setNotes,
-  onRecord
+  onRecord,
+  onTimeChange
 }: BottleTabProps) => {
   return (
     <div className="space-y-6">
-      {/* Date & Time Display */}
-      <div className="text-center mb-4">
-        <div className="text-lg font-semibold text-gray-800">
-          {currentTime ? formatDate(currentTime) : ''}
-        </div>
-        <div className="text-sm text-gray-500">
-          {currentTime ? formatTimeOfDay(currentTime) : ''}
-        </div>
+      {/* Enhanced Date & Time Display */}
+      <div className="flex justify-center mb-4">
+        {currentTime && (
+          <DateTime
+            currentDateTime={currentTime}
+            onDateTimeChange={onTimeChange}
+            theme="bottle"
+            editable={!!onTimeChange}
+            size="medium"
+          />
+        )}
       </div>
 
       <div className="max-w-md mx-auto space-y-6">

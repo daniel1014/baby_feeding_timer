@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
-import { CalendarDays, Clock3, Baby } from 'lucide-react';
-import { formatDate, formatTimeOfDay } from '../../utils/timeFormatting';
+import { Baby } from 'lucide-react';
+import { DateTime } from '../UI/DateTime';
 import { DiaperAmount, DiaperColor, DiaperTexture, DiaperMood, DiaperRecordInput } from '../../types';
 
 interface DiaperTabProps {
@@ -24,8 +24,9 @@ export const DiaperTab: React.FC<DiaperTabProps> = ({ currentTime, onRecord }) =
   const [diaperLeak, setDiaperLeak] = useState(false);
   const [notes, setNotes] = useState('');
 
-  const timeString = useMemo(() => (date ? formatTimeOfDay(date) : ''), [date]);
-  const dateString = useMemo(() => (date ? formatDate(date) : ''), [date]);
+  const handleDateTimeChange = (newDateTime: Date) => {
+    setDate(newDateTime);
+  };
 
   const record = () => {
     onRecord({
@@ -80,14 +81,15 @@ export const DiaperTab: React.FC<DiaperTabProps> = ({ currentTime, onRecord }) =
 
   return (
     <div className="space-y-6">
-      {/* Date & Time */}
-      <div className="text-center mb-4">
-        <div className="text-lg font-semibold text-gray-800 flex items-center justify-center gap-2">
-          <CalendarDays className="w-4 h-4" /> {dateString}
-        </div>
-        <div className="text-sm text-gray-500 flex items-center justify-center gap-2">
-          <Clock3 className="w-4 h-4" /> {timeString}
-        </div>
+      {/* Enhanced Date & Time Display */}
+      <div className="flex justify-center mb-4">
+        <DateTime
+          currentDateTime={date}
+          onDateTimeChange={handleDateTimeChange}
+          theme="diaper"
+          editable={true}
+          size="medium"
+        />
       </div>
 
       <div className="max-w-md mx-auto space-y-6">

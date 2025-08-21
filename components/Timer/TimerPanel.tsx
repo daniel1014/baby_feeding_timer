@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Play, Pause, RotateCcw, Save, Timer, Watch, Plus, Check } from 'lucide-react';
 import { UseUnifiedTimerReturn } from '../../hooks/useUnifiedTimer';
 import AnimatedMilkBottleTimer from '../UI/AnimatedMilkBottleTimer';
-import { formatDate, formatTimeOfDay } from '../../utils/timeFormatting';
+import { DateTime } from '../UI/DateTime';
 import { TIMER_PRESETS } from '../../types';
 
 interface TimerPanelProps {
@@ -13,6 +13,7 @@ interface TimerPanelProps {
   sleepStartTime?: Date | null;
   onComplete: () => void;
   onSleepStart?: () => void;
+  onTimeChange?: (newTime: Date) => void;
 }
 
 export const TimerPanel = React.memo(({
@@ -21,7 +22,8 @@ export const TimerPanel = React.memo(({
   currentTime,
   sleepStartTime,
   onComplete,
-  onSleepStart
+  onSleepStart,
+  onTimeChange
 }: TimerPanelProps) => {
   const [customTimerDuration, setCustomTimerDuration] = useState('');
   const [showCustomDurationInput, setShowCustomDurationInput] = useState(false);
@@ -66,14 +68,17 @@ export const TimerPanel = React.memo(({
 
   return (
     <div className="space-y-6">
-      {/* Date & Time Display */}
-      <div className="text-center mb-4">
-        <div className="text-lg font-semibold text-gray-800">
-          {displayTime ? formatDate(displayTime) : ''}
-        </div>
-        <div className="text-sm text-gray-500">
-          {displayTime ? formatTimeOfDay(displayTime) : ''}
-        </div>
+      {/* Enhanced Date & Time Display */}
+      <div className="flex justify-center mb-4">
+        {displayTime && (
+          <DateTime
+            currentDateTime={displayTime}
+            onDateTimeChange={onTimeChange}
+            theme={theme}
+            editable={!!onTimeChange}
+            size="medium"
+          />
+        )}
       </div>
 
       {/* Mode Toggle */}
