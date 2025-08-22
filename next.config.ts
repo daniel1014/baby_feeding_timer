@@ -5,6 +5,7 @@ const nextConfig: NextConfig = {
     eslint: {
         ignoreDuringBuilds: true,
     },
+    basePath: '/babyfeed',
 };
 
 export default nextConfig;
