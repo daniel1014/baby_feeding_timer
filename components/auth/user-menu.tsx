@@ -161,7 +161,14 @@ export function UserMenu() {
           <motion.button
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.9 }}
-            onClick={() => toast.info("Settings coming soon!")}
+            onClick={() => toast("Settings coming soon!", { 
+              icon: '⚙️',
+              style: {
+                borderRadius: '10px',
+                background: '#333',
+                color: '#fff',
+              },
+            })}
             className="p-2 rounded-xl bg-gray-100/70 hover:bg-gray-200/70 text-gray-600 hover:text-gray-800 transition-all duration-200 backdrop-blur-sm"
           >
             <Settings className="h-4 w-4" />

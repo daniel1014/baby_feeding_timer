@@ -70,9 +70,22 @@ export const auth = betterAuth({
         expiresIn: 60 * 60 * 24 * 7, // 7 days
         updateAge: 60 * 60 * 24, // 1 day
         cookieCache: {
-            enabled: true,
-            maxAge: 5 * 60 // 5 minutes
+            enabled: false // Disable cookie caching to prevent "session data too large" error
         }
+    },
+    // Add better state management for OAuth
+    state: {
+        // Increase state expiration time to prevent premature expiration
+        expiresIn: 10 * 60, // 10 minutes (default is 5 minutes)
+    },
+    // Add better error handling
+    onError: (error: any, request: any) => {
+        console.error('Better Auth Error:', {
+            error: error.message,
+            code: error.code,
+            url: request.url,
+            timestamp: new Date().toISOString()
+        });
     },
     baseURL: process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000",
     secret: process.env.BETTER_AUTH_SECRET!,
