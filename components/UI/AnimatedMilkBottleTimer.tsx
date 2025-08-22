@@ -319,7 +319,7 @@ export default function AnimatedMilkBottleTimer({
     return (
       <div className="flex items-center justify-center">
         <Image
-          src="/baby_sleeping.png"
+          src="/babyfeed/baby_sleeping.png"
           alt="Baby sleeping peacefully"
           width={config.width}
           height={config.height}

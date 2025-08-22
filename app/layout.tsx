@@ -17,6 +17,9 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Baby Feeding Timer",
   description: "Track your baby's feeding schedule and habits",
+  icons: {
+    icon: '/babyfeed/favicon.ico',
+  },
 };
 
 export default function RootLayout({
