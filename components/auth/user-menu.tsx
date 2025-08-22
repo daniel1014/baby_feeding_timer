@@ -7,6 +7,7 @@ import { Loader2, LogOut, Settings, User } from "lucide-react";
 import { toast } from "react-hot-toast";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
+import Image from "next/image";
 
 // Generate a colorful avatar based on user's name/email
 const generateAvatar = (name: string, email: string) => {
@@ -112,10 +113,13 @@ export function UserMenu() {
         <motion.div className="relative">
           {session.user.image ? (
             <div className="relative">
-              <img
+              <Image
                 src={session.user.image}
                 alt={session.user.name || "User"}
+                width={40}
+                height={40}
                 className="w-10 h-10 rounded-xl object-cover ring-2 ring-white/50 group-hover:ring-white/80 transition-all duration-200"
+                priority
               />
               <motion.div 
                 initial={{ scale: 0 }}
