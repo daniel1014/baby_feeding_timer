@@ -31,6 +31,8 @@ databasePool.on('error', (err) => {
 
 export const auth = betterAuth({
     database: databasePool,
+    // Mount Better Auth at /api/auth (no Next.js basePath; worker adds prefix externally)
+    basePath: "/api/auth",
     emailAndPassword: {
         enabled: true,
         autoSignIn: true,
@@ -44,9 +46,7 @@ export const auth = betterAuth({
         google: {
             clientId: process.env.GOOGLE_CLIENT_ID!,
             clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
-            redirectURI: process.env.NODE_ENV === 'production' 
-                ? `${process.env.NEXT_PUBLIC_APP_URL}/api/auth/callback/google`
-                : "http://localhost:3000/api/auth/callback/google"
+            redirectURI: `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/api/auth/callback/google`
         }
     },
     user: {

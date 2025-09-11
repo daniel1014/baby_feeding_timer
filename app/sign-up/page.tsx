@@ -1,4 +1,5 @@
 import SignUp from "@/auth/sign-up";
+import { Suspense } from "react";
 
 export default function SignUpPage() {
   return (
@@ -18,7 +19,14 @@ export default function SignUpPage() {
             </a>
           </p>
         </div>
-        <SignUp />
+        <Suspense fallback={
+          <div className="w-full bg-white rounded-md shadow p-6 text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4" />
+            <p className="text-gray-600 text-sm">Loading...</p>
+          </div>
+        }>
+          <SignUp />
+        </Suspense>
       </div>
     </div>
   );

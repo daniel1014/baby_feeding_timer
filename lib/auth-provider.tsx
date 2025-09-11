@@ -43,6 +43,7 @@ export function useAuth() {
 
 export function RequireAuth({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLoading } = useAuth();
+  const basePath = (process.env.NEXT_PUBLIC_BASE_PATH || "").replace(/\/$/, "");
 
   if (isLoading) {
     return (
@@ -56,8 +57,8 @@ export function RequireAuth({ children }: { children: React.ReactNode }) {
   }
 
   if (!isAuthenticated) {
-    const current = typeof window !== 'undefined' ? `${window.location.pathname}${window.location.search}` : '/babyfeed';
-    const target = `/sign-in?redirect=${encodeURIComponent(current || '/babyfeed')}`;
+    const current = typeof window !== 'undefined' ? `${window.location.pathname}${window.location.search}` : '/';
+    const target = `${basePath}/sign-in?redirect=${encodeURIComponent(current || '/')}`;
     window.location.href = target;
     return null;
   }
