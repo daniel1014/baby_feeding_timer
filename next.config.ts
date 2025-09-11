@@ -6,7 +6,6 @@ const nextConfig: NextConfig = {
         ignoreDuringBuilds: true,
     },
     basePath: '/babyfeed',
-    assetPrefix: '/babyfeed/'
 };
 
 export default nextConfig;

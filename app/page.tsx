@@ -122,7 +122,7 @@ export default function Home() {
                 {tabType === 'bottle' && <Milk className="w-4 h-4" />}
                 {tabType === 'sleeping' && <Moon className="w-4 h-4" />}
                 {tabType === 'diaper' && (
-                  <Image src="/babyfeed/diaper_baby.svg" alt="Diaper" width={16} height={16} />
+                  <Image src="/diaper_baby.svg" alt="Diaper" width={16} height={16} />
                 )}
                 {/* larger screen only */}
                 <span className="hidden sm:inline">
