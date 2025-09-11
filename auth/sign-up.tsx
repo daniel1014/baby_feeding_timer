@@ -14,9 +14,10 @@ import { Label } from "@/components/UI/label";
 import { useState } from "react";
 import Image from "next/image";
 import { Loader2, X } from "lucide-react";
-import { signUp } from "@/auth/auth-client";
+import { signUp, useSession } from "@/auth/auth-client";
 import { toast } from "react-hot-toast";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect } from "react";
 
 export default function SignUp() {
 	const [firstName, setFirstName] = useState("");
@@ -27,13 +28,29 @@ export default function SignUp() {
 	const [image, setImage] = useState<File | null>(null);
 	const [imagePreview, setImagePreview] = useState<string | null>(null);
 	const router = useRouter();
+	const { data: session } = useSession();
 	const [loading, setLoading] = useState(false);
 	const searchParams = useSearchParams();
-	const redirectTo =
-		searchParams.get("redirect") ||
-		searchParams.get("callbackUrl") ||
-		searchParams.get("returnTo") ||
-		"/babyfeed";
+	const basePath = (process.env.NEXT_PUBLIC_BASE_PATH || "").replace(/\/$/, "");
+	const resolveRedirect = () => {
+		const raw =
+			searchParams.get("redirect") ||
+			searchParams.get("callbackUrl") ||
+			searchParams.get("returnTo") ||
+			"/";
+		let target = raw.startsWith("/") ? raw : `/${raw}`;
+		if (target.startsWith("/sign-in") || target.startsWith("/sign-up")) target = "/";
+		return `${basePath}${target}`;
+	};
+
+	useEffect(() => {
+		if (session?.user) {
+			const to = resolveRedirect();
+			router.replace(to);
+			router.refresh();
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [session?.user]);
 
 	const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 		const file = e.target.files?.[0];
@@ -172,7 +189,9 @@ export default function SignUp() {
 								
 								if (result.data) {
 									toast.success("Account created successfully!");
-									router.push(redirectTo);
+									const to = resolveRedirect();
+									router.replace(to);
+									router.refresh();
 								} else if (result.error) {
 									toast.error(result.error.message || "Failed to create account");
 								}

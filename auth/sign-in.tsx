@@ -7,7 +7,7 @@ import { Label } from "@/components/UI/label";
 import { Checkbox } from "@/components/UI/checkbox";
 import { useState, useEffect, Suspense } from "react";
 import { Loader2, AlertCircle } from "lucide-react";
-import { signIn } from "@/auth/auth-client";
+import { signIn, useSession } from "@/auth/auth-client";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { toast } from "react-hot-toast";
@@ -21,11 +21,20 @@ function SignInForm() {
   const [oauthError, setOauthError] = useState<string | null>(null);
   const router = useRouter();
   const searchParams = useSearchParams();
-  const redirectTo =
-    searchParams.get("redirect") ||
-    searchParams.get("callbackUrl") ||
-    searchParams.get("returnTo") ||
-    "/babyfeed";
+  const { data: session } = useSession();
+  const basePath = (process.env.NEXT_PUBLIC_BASE_PATH || "").replace(/\/$/, "");
+
+  // 統一處理目標導向，避免 basePath 與 /sign-in 造成循環
+  const resolveRedirect = () => {
+    const raw =
+      searchParams.get("redirect") ||
+      searchParams.get("callbackUrl") ||
+      searchParams.get("returnTo") ||
+      "/";
+    let target = raw.startsWith("/") ? raw : `/${raw}`;
+    if (target.startsWith("/sign-in")) target = "/"; // 防止自循環
+    return `${basePath}${target}`;
+  };
 
   // Check for OAuth errors in URL parameters
   useEffect(() => {
@@ -38,6 +47,16 @@ function SignInForm() {
     }
   }, [searchParams]);
 
+  // 當 session 變成已登入時，主動導航並 refresh
+  useEffect(() => {
+    if (session?.user) {
+      const to = resolveRedirect();
+      router.replace(to);
+      router.refresh();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session?.user]);
+
   const handleGoogleSignIn = async () => {
     try {
       setLoading(true);
@@ -46,7 +65,7 @@ function SignInForm() {
       // Clear any existing OAuth state by refreshing the page
       await signIn.social({
         provider: "google",
-        callbackURL: redirectTo,
+        callbackURL: resolveRedirect(),
       });
     } catch (error: any) {
       console.error("Google sign in error:", error);
@@ -145,7 +164,9 @@ function SignInForm() {
                   
                   if (result.data) {
                     toast.success("Successfully signed in!");
-                    router.push(redirectTo);
+                    const to = resolveRedirect();
+                    router.replace(to);
+                    router.refresh();
                   } else if (result.error) {
                     toast.error(result.error.message || "Failed to sign in");
                   }
