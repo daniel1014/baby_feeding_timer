@@ -16,7 +16,7 @@ import Image from "next/image";
 import { Loader2, X } from "lucide-react";
 import { signUp } from "@/auth/auth-client";
 import { toast } from "react-hot-toast";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 export default function SignUp() {
 	const [firstName, setFirstName] = useState("");
@@ -28,6 +28,12 @@ export default function SignUp() {
 	const [imagePreview, setImagePreview] = useState<string | null>(null);
 	const router = useRouter();
 	const [loading, setLoading] = useState(false);
+	const searchParams = useSearchParams();
+	const redirectTo =
+		searchParams.get("redirect") ||
+		searchParams.get("callbackUrl") ||
+		searchParams.get("returnTo") ||
+		"/babyfeed";
 
 	const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 		const file = e.target.files?.[0];
@@ -166,7 +172,7 @@ export default function SignUp() {
 								
 								if (result.data) {
 									toast.success("Account created successfully!");
-									router.push("/");
+									router.push(redirectTo);
 								} else if (result.error) {
 									toast.error(result.error.message || "Failed to create account");
 								}

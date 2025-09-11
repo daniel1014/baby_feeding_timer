@@ -56,7 +56,9 @@ export function RequireAuth({ children }: { children: React.ReactNode }) {
   }
 
   if (!isAuthenticated) {
-    window.location.href = "/sign-in";
+    const current = typeof window !== 'undefined' ? `${window.location.pathname}${window.location.search}` : '/babyfeed';
+    const target = `/sign-in?redirect=${encodeURIComponent(current || '/babyfeed')}`;
+    window.location.href = target;
     return null;
   }
 

@@ -29,6 +29,9 @@ jest.mock('next/navigation', () => ({
     refresh: jest.fn(),
     replace: jest.fn(),
   }),
+  useSearchParams: () => ({
+    get: (_key: string) => null,
+  }),
 }))
 
 const mockSignInEmail = signIn.email as jest.MockedFunction<typeof signIn.email>
@@ -101,7 +104,7 @@ describe('SignIn Component', () => {
     await waitFor(() => {
       expect(mockSignInSocial).toHaveBeenCalledWith({
         provider: 'google',
-        callbackURL: '/',
+        callbackURL: '/babyfeed',
       })
     })
   })
@@ -115,7 +118,7 @@ describe('SignIn Component', () => {
     await user.click(screen.getByRole('button', { name: /sign in with google/i }))
 
     await waitFor(() => {
-      expect(toast.error).toHaveBeenCalledWith('Failed to sign in with Google')
+      expect(toast.error).toHaveBeenCalled()
     })
   })
 

@@ -28,6 +28,9 @@ jest.mock('next/navigation', () => ({
     refresh: jest.fn(),
     replace: jest.fn(),
   }),
+  useSearchParams: () => ({
+    get: (_key: string) => null,
+  }),
 }))
 
 const mockSignUpEmail = signUp.email as jest.MockedFunction<typeof signUp.email>

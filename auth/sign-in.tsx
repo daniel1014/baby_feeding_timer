@@ -21,6 +21,11 @@ function SignInForm() {
   const [oauthError, setOauthError] = useState<string | null>(null);
   const router = useRouter();
   const searchParams = useSearchParams();
+  const redirectTo =
+    searchParams.get("redirect") ||
+    searchParams.get("callbackUrl") ||
+    searchParams.get("returnTo") ||
+    "/babyfeed";
 
   // Check for OAuth errors in URL parameters
   useEffect(() => {
@@ -41,7 +46,7 @@ function SignInForm() {
       // Clear any existing OAuth state by refreshing the page
       await signIn.social({
         provider: "google",
-        callbackURL: "/"
+        callbackURL: redirectTo,
       });
     } catch (error: any) {
       console.error("Google sign in error:", error);
@@ -140,7 +145,7 @@ function SignInForm() {
                   
                   if (result.data) {
                     toast.success("Successfully signed in!");
-                    router.push("/");
+                    router.push(redirectTo);
                   } else if (result.error) {
                     toast.error(result.error.message || "Failed to sign in");
                   }

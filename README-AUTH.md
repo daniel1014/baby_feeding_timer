@@ -209,7 +209,7 @@ const result = await signIn.email({
 // Google sign in
 await signIn.social({
   provider: "google",
-  callbackURL: "/"
+  callbackURL: "/babyfeed"
 });
 
 // Sign up
