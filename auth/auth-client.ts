@@ -1,11 +1,17 @@
 import { createAuthClient } from "better-auth/react";
 import type { auth } from "./auth";
 
+// Compute origin at runtime (browser) to avoid hardcoding localhost in prod
+const runtimeOrigin = typeof window !== "undefined"
+  ? window.location.origin.replace(/\/$/, "")
+  : (process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000").replace(/\/$/, "");
+
 // Debug: Log the base URL being used
-console.log("Auth client base URL:", process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000");
+console.log("Auth client base URL:", `${runtimeOrigin}/api/auth`);
 
 export const authClient = createAuthClient({
-    baseURL: process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000",
+    baseURL: runtimeOrigin,
+    basePath: "/api/auth",
     fetchOptions: {
         onError(context) {
             console.error("Auth client error details:", {
