@@ -18,6 +18,7 @@ import { signUp, useSession } from "@/auth/auth-client";
 import { toast } from "react-hot-toast";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect } from "react";
+import { getBasePathClient } from "@/utils/basePath";
 
 export default function SignUp() {
 	const [firstName, setFirstName] = useState("");
@@ -31,7 +32,7 @@ export default function SignUp() {
 	const { data: session } = useSession();
 	const [loading, setLoading] = useState(false);
 	const searchParams = useSearchParams();
-	const basePath = (process.env.NEXT_PUBLIC_BASE_PATH || "").replace(/\/$/, "");
+    const basePath = getBasePathClient();
 	const resolveRedirect = () => {
 		const raw =
 			searchParams.get("redirect") ||

@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { useSession } from "@/auth/auth-client";
+import { getBasePathClient, prefixPath } from "@/utils/basePath";
 type Session = any; // Simplified type for better compatibility
 
 interface AuthContextType {
@@ -43,7 +44,7 @@ export function useAuth() {
 
 export function RequireAuth({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLoading } = useAuth();
-  const basePath = (process.env.NEXT_PUBLIC_BASE_PATH || "").replace(/\/$/, "");
+  const basePath = getBasePathClient();
 
   if (isLoading) {
     return (
@@ -58,7 +59,7 @@ export function RequireAuth({ children }: { children: React.ReactNode }) {
 
   if (!isAuthenticated) {
     const current = typeof window !== 'undefined' ? `${window.location.pathname}${window.location.search}` : '/';
-    const target = `${basePath}/sign-in?redirect=${encodeURIComponent(current || '/')}`;
+    const target = prefixPath(`/sign-in?redirect=${encodeURIComponent(current || '/')}` , basePath);
     window.location.href = target;
     return null;
   }

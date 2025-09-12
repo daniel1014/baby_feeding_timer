@@ -12,6 +12,7 @@ import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { toast } from "react-hot-toast";
 import { useRouter, useSearchParams } from "next/navigation";
+import { getBasePathClient } from "@/utils/basePath";
 
 function SignInForm() {
   const [email, setEmail] = useState("");
@@ -22,7 +23,7 @@ function SignInForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { data: session } = useSession();
-  const basePath = (process.env.NEXT_PUBLIC_BASE_PATH || "").replace(/\/$/, "");
+  const basePath = getBasePathClient();
 
   // 統一處理目標導向，避免 basePath 與 /sign-in 造成循環
   const resolveRedirect = () => {

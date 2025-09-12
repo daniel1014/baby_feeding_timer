@@ -14,6 +14,9 @@ import { playNotificationSound, triggerHapticFeedback, showBrowserNotification }
 
 export interface UseSessionManagerReturn {
   sessions: FeedingSession[];
+  loading: boolean;
+  error: string | null;
+  refreshSessions: () => Promise<void>;
   completeBreastfeeding: (timerTimeMs: number, notes?: string) => void;
   recordBottleFeeding: (amount: string, unit: 'ml' | 'oz', notes?: string) => void;
   completeSleeping: (timerTimeMs: number, notes?: string) => void;
@@ -22,6 +25,8 @@ export interface UseSessionManagerReturn {
 
 export function useSessionManager(): UseSessionManagerReturn {
   const [sessions, setSessions] = useState<FeedingSession[]>([]);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
 
   const completeBreastfeeding = useCallback((timerTimeMs: number, notes?: string) => {
     if (timerTimeMs === 0) return;
@@ -137,8 +142,25 @@ export function useSessionManager(): UseSessionManagerReturn {
     });
   }, []);
 
+  const refreshSessions = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      // No-op placeholder: keep local-only sessions consistent.
+      // If later integrating with backend, fetch from `/api/sessions` and map.
+      setSessions(prev => [...prev]);
+    } catch (e: any) {
+      setError(e?.message || 'Failed to refresh sessions');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   return {
     sessions,
+    loading,
+    error,
+    refreshSessions,
     completeBreastfeeding,
     recordBottleFeeding,
     completeSleeping,

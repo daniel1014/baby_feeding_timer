@@ -6,6 +6,7 @@ import { Button } from "@/components/UI/button";
 import { Loader2, LogOut, Settings, User } from "lucide-react";
 import { toast } from "react-hot-toast";
 import { useRouter } from "next/navigation";
+import { getBasePathClient, prefixPath } from "@/utils/basePath";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 
@@ -43,7 +44,8 @@ export function UserMenu() {
     try {
       await signOut();
       toast.success("Signed out successfully");
-      router.push("/sign-in");
+      const base = getBasePathClient();
+      router.push(prefixPath('/sign-in', base));
     } catch (error) {
       toast.error("Failed to sign out");
       console.error("Sign out error:", error);
@@ -78,13 +80,19 @@ export function UserMenu() {
       >
         <Button 
           variant="outline" 
-          onClick={() => router.push("/sign-in")}
+          onClick={() => {
+            const base = getBasePathClient();
+            router.push(prefixPath('/sign-in', base));
+          }}
           className="bg-white/70 backdrop-blur-sm border-white/30 hover:bg-white/90 transition-all duration-200"
         >
           Sign In
         </Button>
         <Button 
-          onClick={() => router.push("/sign-up")}
+          onClick={() => {
+            const base = getBasePathClient();
+            router.push(prefixPath('/sign-up', base));
+          }}
           className="bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 shadow-lg hover:shadow-xl transition-all duration-200"
         >
           Sign Up
