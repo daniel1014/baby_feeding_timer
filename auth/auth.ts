@@ -33,6 +33,13 @@ export const auth = betterAuth({
     database: databasePool,
     // Mount Better Auth at /api/auth (no Next.js basePath; worker adds prefix externally)
     basePath: "/api/auth",
+    // 動態信任來源：同時支援正式網域、無 www 版本、本地與 Vercel 預覽
+    trustedOrigins: [
+        "https://www.faithfulstack.com",
+        "https://faithfulstack.com",
+        "https://*.vercel.app",
+        "http://localhost:3000",
+    ],
     emailAndPassword: {
         enabled: true,
         autoSignIn: true,
@@ -46,7 +53,7 @@ export const auth = betterAuth({
         google: {
             clientId: process.env.GOOGLE_CLIENT_ID!,
             clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
-            redirectURI: `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/api/auth/callback/google`
+            // 交由 Better Auth 以 request 的 X-Forwarded-* 自動推導 baseURL/callback
         }
     },
     user: {
@@ -87,6 +94,5 @@ export const auth = betterAuth({
             timestamp: new Date().toISOString()
         });
     },
-    baseURL: process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000",
     secret: process.env.BETTER_AUTH_SECRET!,
 });
