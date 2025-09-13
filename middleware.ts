@@ -19,8 +19,11 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // For now, just check for session cookie (minimal Edge Runtime compatible approach)
-  const sessionCookie = request.cookies.get("better-auth.session_token");
+  // For now, just check for session cookie (Edge runtime friendly)
+  // Better Auth 會在 production 使用 __Secure- 前綴
+  const sessionCookie =
+    request.cookies.get("better-auth.session_token") ||
+    request.cookies.get("__Secure-better-auth.session_token");
   
   if (!sessionCookie?.value) {
     const signInUrl = new URL("/sign-in", request.url);
