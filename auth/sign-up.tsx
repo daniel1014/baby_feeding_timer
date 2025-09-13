@@ -18,7 +18,7 @@ import { signUp, useSession } from "@/auth/auth-client";
 import { toast } from "react-hot-toast";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect } from "react";
-import { getBasePathClient } from "@/utils/basePath";
+import { getBasePathClient, prefixPath } from "@/utils/basePath";
 
 export default function SignUp() {
 	const [firstName, setFirstName] = useState("");
@@ -41,7 +41,7 @@ export default function SignUp() {
 			"/";
 		let target = raw.startsWith("/") ? raw : `/${raw}`;
 		if (target.startsWith("/sign-in") || target.startsWith("/sign-up")) target = "/";
-		return `${basePath}${target}`;
+		return prefixPath(target, basePath);
 	};
 
 	useEffect(() => {

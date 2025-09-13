@@ -12,7 +12,7 @@ import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { toast } from "react-hot-toast";
 import { useRouter, useSearchParams } from "next/navigation";
-import { getBasePathClient } from "@/utils/basePath";
+import { getBasePathClient, prefixPath } from "@/utils/basePath";
 
 function SignInForm() {
   const [email, setEmail] = useState("");
@@ -34,7 +34,8 @@ function SignInForm() {
       "/";
     let target = raw.startsWith("/") ? raw : `/${raw}`;
     if (target.startsWith("/sign-in")) target = "/"; // 防止自循環
-    return `${basePath}${target}`;
+    // 使用 prefixPath 避免 basePath 重覆（如 /babyfeed + /babyfeed => /babyfeed）
+    return prefixPath(target, basePath);
   };
 
   // Check for OAuth errors in URL parameters
