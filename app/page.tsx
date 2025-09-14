@@ -288,7 +288,7 @@ export default function Home() {
         </div>
 
         {/* Recent Sessions */}
-        <SessionHistory sessions={sessionManager.sessions} />
+        <SessionHistory sessions={sessionManager.sessions} activeTab={activeTab} />
 
         {/* Encouragement Footer */}
         <motion.div

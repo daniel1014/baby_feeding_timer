@@ -7,11 +7,34 @@ import { ozToMl } from '../../utils/conversions';
 
 interface SessionHistoryProps {
   sessions: FeedingSession[];
+  activeTab: SessionType;
 }
 
-export const SessionHistory = React.memo(({ sessions }: SessionHistoryProps) => {
-  if (sessions.length === 0) {
-    return null;
+export const SessionHistory = React.memo(({ sessions, activeTab }: SessionHistoryProps) => {
+  // Filter sessions by active tab type
+  const filteredSessions = sessions.filter(session => session.type === activeTab);
+  
+  if (filteredSessions.length === 0) {
+    const tabNames = {
+      breastfeeding: 'Breastfeeding',
+      bottle: 'Bottle Feeding', 
+      sleeping: 'Sleeping',
+      diaper: 'Diaper'
+    };
+    
+    return (
+      <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl p-4 sm:p-6">
+        <h3 className="text-lg sm:text-xl font-semibold text-gray-800 mb-3 sm:mb-4 flex items-center gap-2">
+          <Clock className="w-4 h-4 sm:w-5 sm:h-5" />
+          Recent {tabNames[activeTab]} History
+        </h3>
+        <div className="text-center py-8 text-gray-500">
+          <div className="text-4xl mb-2">{TAB_THEMES[activeTab].icon}</div>
+          <p>No {tabNames[activeTab].toLowerCase()} sessions yet</p>
+          <p className="text-sm mt-1">Start tracking to see your history here</p>
+        </div>
+      </div>
+    );
   }
 
   const getSessionIcon = (type: SessionType) => {
@@ -44,14 +67,21 @@ export const SessionHistory = React.memo(({ sessions }: SessionHistoryProps) => 
     }
   };
 
+  const tabNames = {
+    breastfeeding: 'Breastfeeding',
+    bottle: 'Bottle Feeding', 
+    sleeping: 'Sleeping',
+    diaper: 'Diaper'
+  };
+
   return (
     <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl p-4 sm:p-6">
       <h3 className="text-lg sm:text-xl font-semibold text-gray-800 mb-3 sm:mb-4 flex items-center gap-2">
         <Clock className="w-4 h-4 sm:w-5 sm:h-5" />
-        Recent History
+        Recent {tabNames[activeTab]} History
       </h3>
       <div className="space-y-2.5 sm:space-y-3">
-        {sessions.slice(0, 5).map((session, index) => {
+        {filteredSessions.map((session, index) => {
           const theme = TAB_THEMES[session.type as SessionType];
           
           return (
