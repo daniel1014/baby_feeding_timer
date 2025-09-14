@@ -37,6 +37,23 @@ export const SessionHistory = React.memo(({ sessions, activeTab }: SessionHistor
     );
   }
 
+  const getMoodEmoji = (mood?: string) => {
+    switch (mood) {
+      case 'very_happy':
+        return '😄';
+      case 'happy':
+        return '🙂';
+      case 'neutral':
+        return '😐';
+      case 'sad':
+        return '☹️';
+      case 'crying':
+        return '😢';
+      default:
+        return '📝';
+    }
+  };
+
   const getSessionIcon = (type: SessionType) => {
     switch (type) {
       case 'breastfeeding':
@@ -92,20 +109,49 @@ export const SessionHistory = React.memo(({ sessions, activeTab }: SessionHistor
               transition={{ delay: index * 0.1 }}
               className="flex items-center justify-between p-3 sm:p-4 bg-white rounded-lg shadow-sm border border-gray-100"
             >
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-3 w-0 flex-1 min-w-0">
                 <div className={`p-2 rounded-full ${theme.secondary}`}>
                   {getSessionIcon(session.type as SessionType)}
                 </div>
-                <div>
-                  <div className="font-medium text-gray-800">
+                <div className="min-w-0">
+                  {/* <div className="font-medium text-gray-800 leading-5">
                     {getSessionTitle(session.type as SessionType)}
-                  </div>
-                  <div className="text-sm text-gray-500">
+                  </div> */}
+                  <div className="text-xs sm:text-sm text-gray-500">
                     {formatDate(session.startTime)} • {session.startTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                     {session.endTime && session.startTime.toDateString() !== session.endTime.toDateString() && (
                       <span> - {session.endTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                     )}
                   </div>
+                  {/* Notes for non-diaper sessions under datetime */}
+                  {session.type !== 'diaper' && session.notes && (
+                    <div className="mt-1 text-[11px] sm:text-xs text-gray-600 inline-flex items-center gap-1 min-w-0 truncate">
+                      <span>📝</span>
+                      <span className="truncate">{session.notes}</span>
+                    </div>
+                  )}
+                  {session.type === 'diaper' && (
+                    <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0 text-[11px] sm:text-xs text-gray-600 leading-4">
+                      {(() => {
+                        const s: any = session;
+                        const parts: string[] = [];
+                        if (s.diaperType) parts.push(String(s.diaperType));
+                        if (s.amount && s.amount !== 'None') parts.push(String(s.amount));
+                        if (s.color && s.color !== 'None') parts.push(String(s.color));
+                        if (s.texture && s.texture !== 'None') parts.push(String(s.texture));
+                        if (s.openAirAccident || s.diaperLeak) {
+                          const issues = [s.openAirAccident ? 'Open Air Accident' : null, s.diaperLeak ? 'Leak' : null].filter(Boolean).join(' & ');
+                          parts.push(issues);
+                        }
+                        return parts.map((txt: string, i: number) => (
+                          <span key={i} className="truncate">
+                            {i > 0 && <span className="mx-1 opacity-60">|</span>}
+                            {txt}
+                          </span>
+                        ));
+                      })()}
+                    </div>
+                  )}
                 </div>
               </div>
               <div className="text-right">
@@ -124,20 +170,10 @@ export const SessionHistory = React.memo(({ sessions, activeTab }: SessionHistor
                     )}
                   </div>
                 )}
-                {session.type === 'diaper' && (
-                  <div className="text-xs text-gray-600">
-                    {(session as any).diaperType}
-                    {((session as any).amount && (session as any).amount !== 'None') && ` • ${(session as any).amount}`}
-                    {((session as any).color && (session as any).color !== 'None') && ` • ${(session as any).color}`}
-                    {((session as any).texture && (session as any).texture !== 'None') && ` • ${(session as any).texture}`}
-                    {((session as any).openAirAccident || (session as any).diaperLeak) && (
-                      <span> • {[(session as any).openAirAccident ? 'Open Air Accident' : null, (session as any).diaperLeak ? 'Leak' : null].filter(Boolean).join(' & ')}</span>
-                    )}
-                  </div>
-                )}
-                {session.notes && (
-                  <div className="text-xs text-gray-500 mt-1 max-w-32 truncate">
-                    📝 {session.notes}
+                {session.type === 'diaper' && session.notes && (
+                  <div className="text-[11px] sm:text-xs text-gray-500 mt-1 max-w-40 sm:max-w-48 truncate inline-flex items-center gap-1">
+                    <span>{getMoodEmoji((session as any).mood)}</span>
+                    <span className="truncate">{session.notes}</span>
                   </div>
                 )}
               </div>
