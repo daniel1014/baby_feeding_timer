@@ -124,7 +124,6 @@ export const TimerPanel = React.memo(({
               mode={timer.mode}
               initialDuration={timer.mode === 'countdown' ? timer.initialTimeMs : undefined}
               isRunning={timer.isRunning}
-              onComplete={onComplete}
               size={visualSize}
               theme={theme}
             />

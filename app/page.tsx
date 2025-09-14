@@ -124,6 +124,13 @@ export default function Home() {
     setCurrentTime(newTime);
   }, []);
 
+  // 自動完成：倒數計時結束時，觸發與「Save」相同行為
+  useEffect(() => {
+    if (breastfeedingTimer.isCompleted) {
+      handleBreastfeedingComplete();
+    }
+  }, [breastfeedingTimer.isCompleted, handleBreastfeedingComplete]);
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-pink-50 relative overflow-hidden">
       {/* Page Header with Background Particles */}
