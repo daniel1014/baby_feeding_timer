@@ -115,7 +115,7 @@ export function UserMenu() {
       <motion.div 
         whileHover={{ scale: 1.02 }}
         whileTap={{ scale: 0.98 }}
-        className="flex items-center gap-3 bg-white/80 backdrop-blur-sm rounded-2xl px-4 py-3 shadow-lg border border-white/20 hover:bg-white/90 hover:shadow-xl transition-all duration-300 cursor-pointer group"
+        className="flex items-center gap-2 sm:gap-3 bg-white/80 backdrop-blur-sm rounded-xl sm:rounded-2xl px-3 py-2 sm:px-4 sm:py-3 shadow-lg border border-white/20 hover:bg-white/90 hover:shadow-xl transition-all duration-300 cursor-pointer group"
       >
         {/* Avatar */}
         <motion.div className="relative">
@@ -124,9 +124,9 @@ export function UserMenu() {
               <Image
                 src={session.user.image}
                 alt={session.user.name || "User"}
-                width={40}
-                height={40}
-                className="w-10 h-10 rounded-xl object-cover ring-2 ring-white/50 group-hover:ring-white/80 transition-all duration-200"
+                width={36}
+                height={36}
+                className="w-9 h-9 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl object-cover ring-2 ring-white/50 group-hover:ring-white/80 transition-all duration-200"
                 priority
               />
               <motion.div 
@@ -138,7 +138,7 @@ export function UserMenu() {
           ) : (
             <motion.div 
               whileHover={{ rotate: 5 }}
-              className={`w-10 h-10 rounded-xl bg-gradient-to-br ${avatar.gradient} flex items-center justify-center text-white font-semibold text-sm ring-2 ring-white/50 group-hover:ring-white/80 transition-all duration-200 shadow-lg`}
+              className={`w-9 h-9 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-gradient-to-br ${avatar.gradient} flex items-center justify-center text-white font-semibold text-xs sm:text-sm ring-2 ring-white/50 group-hover:ring-white/80 transition-all duration-200 shadow-lg`}
             >
               {avatar.initials}
               <motion.div 
@@ -181,9 +181,9 @@ export function UserMenu() {
                 color: '#fff',
               },
             })}
-            className="p-2 rounded-xl bg-gray-100/70 hover:bg-gray-200/70 text-gray-600 hover:text-gray-800 transition-all duration-200 backdrop-blur-sm"
+            className="p-1.5 sm:p-2 rounded-lg sm:rounded-xl bg-gray-100/70 hover:bg-gray-200/70 text-gray-600 hover:text-gray-800 transition-all duration-200 backdrop-blur-sm"
           >
-            <Settings className="h-4 w-4" />
+            <Settings className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
           </motion.button>
           
           <motion.button
@@ -191,7 +191,7 @@ export function UserMenu() {
             whileTap={{ scale: 0.9 }}
             onClick={handleSignOut}
             disabled={signingOut}
-            className="p-2 rounded-xl bg-red-100/70 hover:bg-red-200/70 text-red-600 hover:text-red-800 transition-all duration-200 backdrop-blur-sm disabled:opacity-50"
+            className="p-1.5 sm:p-2 rounded-lg sm:rounded-xl bg-red-100/70 hover:bg-red-200/70 text-red-600 hover:text-red-800 transition-all duration-200 backdrop-blur-sm disabled:opacity-50"
           >
             <AnimatePresence mode="wait">
               {signingOut ? (
@@ -202,7 +202,7 @@ export function UserMenu() {
                   exit={{ rotate: 360 }}
                   transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
                 >
-                  <Loader2 className="h-4 w-4" />
+                  <Loader2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                 </motion.div>
               ) : (
                 <motion.div
@@ -211,7 +211,7 @@ export function UserMenu() {
                   animate={{ rotate: 0 }}
                   exit={{ rotate: 10 }}
                 >
-                  <LogOut className="h-4 w-4" />
+                  <LogOut className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                 </motion.div>
               )}
             </AnimatePresence>

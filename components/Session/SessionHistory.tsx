@@ -45,12 +45,12 @@ export const SessionHistory = React.memo(({ sessions }: SessionHistoryProps) => 
   };
 
   return (
-    <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl p-6">
-      <h3 className="text-xl font-semibold text-gray-800 mb-4 flex items-center gap-2">
-        <Clock className="w-5 h-5" />
-        Recent Sessions
+    <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl p-4 sm:p-6">
+      <h3 className="text-lg sm:text-xl font-semibold text-gray-800 mb-3 sm:mb-4 flex items-center gap-2">
+        <Clock className="w-4 h-4 sm:w-5 sm:h-5" />
+        Recent History
       </h3>
-      <div className="space-y-3">
+      <div className="space-y-2.5 sm:space-y-3">
         {sessions.slice(0, 5).map((session, index) => {
           const theme = TAB_THEMES[session.type as SessionType];
           
@@ -60,7 +60,7 @@ export const SessionHistory = React.memo(({ sessions }: SessionHistoryProps) => 
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.1 }}
-              className="flex items-center justify-between p-4 bg-white rounded-lg shadow-sm border border-gray-100"
+              className="flex items-center justify-between p-3 sm:p-4 bg-white rounded-lg shadow-sm border border-gray-100"
             >
               <div className="flex items-center gap-3">
                 <div className={`p-2 rounded-full ${theme.secondary}`}>

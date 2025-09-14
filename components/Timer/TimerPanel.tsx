@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Play, Pause, RotateCcw, Save, Timer, Watch, Plus, Check } from 'lucide-react';
 import { UseUnifiedTimerReturn } from '../../hooks/useUnifiedTimer';
@@ -27,6 +27,14 @@ export const TimerPanel = React.memo(({
 }: TimerPanelProps) => {
   const [customTimerDuration, setCustomTimerDuration] = useState('');
   const [showCustomDurationInput, setShowCustomDurationInput] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const check = () => setIsMobile(typeof window !== 'undefined' && window.innerWidth < 640);
+    check();
+    window.addEventListener('resize', check);
+    return () => window.removeEventListener('resize', check);
+  }, []);
 
   const themeColors = {
     breastfeeding: {
@@ -66,65 +74,67 @@ export const TimerPanel = React.memo(({
     Number(customTimerDuration) > 0 &&
     Number(customTimerDuration) <= 1440;
 
+  const visualSize = isMobile ? 'small' : 'medium';
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Enhanced Date & Time Display */}
-      <div className="flex justify-center mb-4">
+      <div className="flex justify-center mb-3 sm:mb-4">
         {displayTime && (
           <DateTime
             currentDateTime={displayTime}
             onDateTimeChange={onTimeChange}
             theme={theme}
             editable={!!onTimeChange}
-            size="medium"
+            size={visualSize}
           />
         )}
       </div>
 
       {/* Mode Toggle */}
-      <div className="flex justify-center mb-6">
-        <div className="flex items-center bg-white rounded-full p-1 shadow-sm border border-gray-200">
+      <div className="flex justify-center mb-4 sm:mb-6">
+        <div className="flex items-center bg-white rounded-full p-0.5 sm:p-1 shadow-sm border border-gray-200">
           <button
             onClick={timer.setStopwatchMode}
-            className={`flex items-center gap-2 px-4 py-2 rounded-full font-medium transition-all duration-200 ${
+            className={`flex items-center gap-1.5 sm:gap-2 px-3 py-1.5 sm:px-4 sm:py-2 rounded-full font-medium transition-all duration-200 ${
               timer.mode === 'stopwatch' ? colors.modeActive : colors.modeInactive
             }`}
           >
-            <Watch className="w-4 h-4" />
-            <span className="text-sm">Stopwatch</span>
+            <Watch className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+            <span className="text-xs sm:text-sm">Stopwatch</span>
           </button>
           <button
             onClick={timer.setTimerMode}
-            className={`flex items-center gap-2 px-4 py-2 rounded-full font-medium transition-all duration-200 ${
+            className={`flex items-center gap-1.5 sm:gap-2 px-3 py-1.5 sm:px-4 sm:py-2 rounded-full font-medium transition-all duration-200 ${
               timer.mode === 'countdown' ? colors.modeActive : colors.modeInactive
             }`}
           >
-            <Timer className="w-4 h-4" />
-            <span className="text-sm">Timer</span>
+            <Timer className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+            <span className="text-xs sm:text-sm">Timer</span>
           </button>
         </div>
       </div>
 
       {/* Animated Timer Display */}
       <div className="text-center">
-        <div className="flex flex-col items-center mb-6">
+        <div className="flex flex-col items-center mb-4 sm:mb-6">
           {/* Timer Display Component */}
-          <div className="mb-4">
+          <div className="mb-3 sm:mb-4">
             <AnimatedMilkBottleTimer
               mode={timer.mode}
               initialDuration={timer.mode === 'countdown' ? timer.initialTimeMs : undefined}
               isRunning={timer.isRunning}
               onComplete={onComplete}
-              size="medium"
+              size={visualSize}
               theme={theme}
             />
           </div>
           
           {/* Time Display */}
-          <div className={`text-4xl font-mono font-bold bg-gradient-to-r ${colors.primary} bg-clip-text text-transparent mb-2`}>
+          <div className={`text-2xl sm:text-4xl font-mono font-bold bg-gradient-to-r ${colors.primary} bg-clip-text text-transparent mb-1 sm:mb-2`}>
             {timer.formatTime(timer.timeMs)}
           </div>
-          <div className="text-sm text-gray-500">
+          <div className="text-xs sm:text-sm text-gray-500">
             {timer.mode === 'stopwatch' 
               ? (timer.isRunning ? 
                   (theme === 'sleeping' ? '😴 Sleeping...' : '🔴 Recording...') : 
@@ -245,7 +255,7 @@ export const TimerPanel = React.memo(({
         </AnimatePresence>
         
         {/* Control Buttons */}
-        <div className="flex justify-center gap-3 mb-6 flex-wrap">
+        <div className="flex justify-center gap-2 sm:gap-3 mb-4 sm:mb-6 flex-wrap">
           {!timer.isRunning ? (
             <>
               {timer.mode === 'stopwatch' && (
@@ -253,10 +263,10 @@ export const TimerPanel = React.memo(({
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   onClick={theme === 'sleeping' && onSleepStart ? onSleepStart : timer.startStopwatch}
-                  className={`flex items-center gap-2 bg-gradient-to-r ${colors.button} text-white px-6 py-3 rounded-full shadow-lg hover:shadow-xl font-medium transform hover:-translate-y-0.5 transition-all duration-200`}
+                  className={`flex items-center gap-2 bg-gradient-to-r ${colors.button} text-white px-4 py-2 sm:px-6 sm:py-3 rounded-full shadow-lg hover:shadow-xl font-medium transform hover:-translate-y-0.5 transition-all duration-200`}
                 >
-                  <Play className="w-5 h-5" />
-                  Start Stopwatch
+                  <Play className="w-4 h-4 sm:w-5 sm:h-5" />
+                  <span className="text-sm">Start</span>
                 </motion.button>
               )}
               {timer.time > 0 && timer.mode === 'countdown' && (
@@ -264,10 +274,10 @@ export const TimerPanel = React.memo(({
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   onClick={timer.resume}
-                  className="flex items-center gap-2 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white px-6 py-3 rounded-full shadow-lg hover:shadow-xl font-medium transform hover:-translate-y-0.5 transition-all duration-200"
+                  className="flex items-center gap-2 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white px-4 py-2 sm:px-6 sm:py-3 rounded-full shadow-lg hover:shadow-xl font-medium transform hover:-translate-y-0.5 transition-all duration-200"
                 >
-                  <Play className="w-5 h-5" />
-                  Resume Timer
+                  <Play className="w-4 h-4 sm:w-5 sm:h-5" />
+                  <span className="text-sm">Resume</span>
                 </motion.button>
               )}
             </>
@@ -276,10 +286,10 @@ export const TimerPanel = React.memo(({
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={timer.pause}
-              className="flex items-center gap-2 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white px-6 py-3 rounded-full shadow-lg hover:shadow-xl font-medium transform hover:-translate-y-0.5 transition-all duration-200"
+              className="flex items-center gap-2 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white px-4 py-2 sm:px-6 sm:py-3 rounded-full shadow-lg hover:shadow-xl font-medium transform hover:-translate-y-0.5 transition-all duration-200"
             >
-              <Pause className="w-5 h-5" />
-              Pause
+              <Pause className="w-4 h-4 sm:w-5 sm:h-5" />
+              <span className="text-sm">Pause</span>
             </motion.button>
           )}
           
@@ -287,10 +297,10 @@ export const TimerPanel = React.memo(({
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={timer.reset}
-            className="flex items-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-700 px-6 py-3 rounded-full shadow-md hover:shadow-lg font-medium transition-all duration-200"
+            className="flex items-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 sm:px-6 sm:py-3 rounded-full shadow-md hover:shadow-lg font-medium transition-all duration-200"
           >
-            <RotateCcw className="w-5 h-5" />
-            Reset
+            <RotateCcw className="w-4 h-4 sm:w-5 sm:h-5" />
+            <span className="text-sm">Reset</span>
           </motion.button>
 
           {timer.time > 0 && (
@@ -298,10 +308,10 @@ export const TimerPanel = React.memo(({
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={onComplete}
-              className="flex items-center gap-2 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white px-6 py-3 rounded-full shadow-lg hover:shadow-xl font-medium transform hover:-translate-y-0.5 transition-all duration-200"
+              className="flex items-center gap-2 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white px-4 py-2 sm:px-6 sm:py-3 rounded-full shadow-lg hover:shadow-xl font-medium transform hover:-translate-y-0.5 transition-all duration-200"
             >
-              <Save className="w-5 h-5" />
-              {theme === 'sleeping' ? 'Wake Up' : 'Complete'}
+              <Save className="w-4 h-4 sm:w-5 sm:h-5" />
+              <span className="text-sm">{theme === 'sleeping' ? 'Wake' : 'Save'}</span>
             </motion.button>
           )}
         </div>

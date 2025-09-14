@@ -129,9 +129,9 @@ export default function Home() {
       {/* Page Header with Background Particles */}
       <PageHeader isClient={isClient} />
 
-      <div className="relative z-10 max-w-4xl mx-auto px-4 py-6">
+      <div className="relative z-10 max-w-4xl mx-auto px-3 sm:px-4 py-3 sm:py-6">
         {/* Tab Navigation */}
-        <div className="flex bg-white rounded-xl p-1 shadow-xl border border-gray-100 mb-8 max-w-2xl mx-auto">
+        <div className="flex bg-white rounded-xl p-1 shadow-xl border border-gray-100 mb-4 sm:mb-8 max-w-2xl mx-auto">
           {(['breastfeeding', 'bottle', 'sleeping', 'diaper'] as SessionType[]).map((tabType) => {
             const theme = TAB_THEMES[tabType];
             const isActive = activeTab === tabType;
@@ -142,17 +142,17 @@ export default function Home() {
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 onClick={() => setActiveTab(tabType)}
-                className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-lg font-medium transition-all duration-300 ${
+                className={`flex-1 flex items-center justify-center gap-1.5 sm:gap-2 py-2 sm:py-3 px-3 sm:px-4 rounded-lg font-medium transition-all duration-300 ${
                   isActive
                     ? theme.secondary + ' shadow-md transform translate-y-[-1px]'
                     : `text-gray-600 hover:${theme.accent} hover:shadow-sm`
                 }`}
               >
-                {tabType === 'breastfeeding' && <Baby className="w-4 h-4" />}
-                {tabType === 'bottle' && <Milk className="w-4 h-4" />}
-                {tabType === 'sleeping' && <Moon className="w-4 h-4" />}
+                {tabType === 'breastfeeding' && <Baby className="w-3.5 h-3.5 sm:w-4 sm:h-4" />}
+                {tabType === 'bottle' && <Milk className="w-3.5 h-3.5 sm:w-4 sm:h-4" />}
+                {tabType === 'sleeping' && <Moon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />}
                 {tabType === 'diaper' && (
-                  <Image src="/diaper_baby.svg" alt="Diaper" width={16} height={16} />
+                  <Image src="/diaper_baby.svg" alt="Diaper" width={14} height={14} className="sm:w-4 sm:h-4" />
                 )}
                 {/* larger screen only */}
                 <span className="hidden sm:inline">
@@ -162,7 +162,7 @@ export default function Home() {
                   {tabType === 'diaper' && 'Diaper'}
                 </span>
                 {/* mobile only */}
-                <span className="sm:hidden text-xs font-medium">
+                <span className="sm:hidden text-[11px] font-medium">
                   {tabType === 'breastfeeding' && 'Breast'}
                   {tabType === 'bottle' && 'Bottle'}
                   {tabType === 'sleeping' && 'Sleep'}
@@ -174,7 +174,7 @@ export default function Home() {
         </div>
 
         {/* Main Content */}
-        <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl p-6 mb-8">
+        <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl p-4 sm:p-6 mb-6 sm:mb-8">
           <AnimatePresence mode="wait">
             {/* Breastfeeding Tab */}
             {activeTab === 'breastfeeding' && (
@@ -295,14 +295,14 @@ export default function Home() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.6 }}
-          className="text-center py-8"
+          className="text-center py-4 sm:py-8"
         >
-          <div className="flex items-center justify-center gap-2 text-lg font-medium text-gray-600">
+          <div className="flex items-center justify-center gap-2 text-base sm:text-lg font-medium text-gray-600">
             <span>🍼</span>
             <span>"You're doing amazing!" </span>
             <span>🍼</span>
           </div>
-          <p className="text-sm text-gray-500 mt-2">
+          <p className="text-xs sm:text-sm text-gray-500 mt-1 sm:mt-2">
             Every feeding is a gift of love 💕
           </p>
         </motion.div>
