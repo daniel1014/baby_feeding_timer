@@ -4,7 +4,7 @@ import React, { useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Clock, Baby, Milk, Moon } from 'lucide-react';
 import { FeedingSession, SessionType, TAB_THEMES } from '../../types';
-import { formatDate, formatTimeFromSeconds } from '../../utils/timeFormatting';
+import { formatDate, formatTimeFromSeconds, formatDurationHuman } from '../../utils/timeFormatting';
 import { ozToMl } from '../../utils/conversions';
 
 interface SessionHistoryProps {
@@ -203,8 +203,11 @@ export const SessionHistory = React.memo(({ sessions, activeTab }: SessionHistor
               </div>
               <div className="text-right">
                 {session.duration && (
-                  <div className="font-mono text-sm font-medium text-gray-600">
-                    {formatTimeFromSeconds(session.duration)}
+                  <div className="text-[11px] sm:text-sm font-medium text-gray-700">
+                    {(session.type === 'breastfeeding' || session.type === 'sleeping')
+                      ? formatDurationHuman(session.duration)
+                      : formatTimeFromSeconds(session.duration)
+                    }
                   </div>
                 )}
                 {session.type === 'bottle' && 'amount' in session && (

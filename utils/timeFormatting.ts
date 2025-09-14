@@ -18,6 +18,24 @@ export function formatTimeFromSeconds(seconds: number): string {
   return formatTime(seconds * 1000);
 }
 
+// Mobile-first human readable duration, e.g. "15 mins", "1 hr 5 mins"
+export function formatDurationHuman(seconds: number): string {
+  if (!seconds || seconds < 0) return '0 sec';
+  // Show exact seconds when under 1 minute
+  if (seconds < 60) {
+    const s = Math.round(seconds);
+    return `${s} ${s === 1 ? 'sec' : 'secs'}`;
+  }
+  let hrs = Math.floor(seconds / 3600);
+  let mins = Math.round((seconds % 3600) / 60);
+  if (mins === 60) { hrs += 1; mins = 0; }
+
+  const hrPart = hrs > 0 ? `${hrs} ${hrs === 1 ? 'hr' : 'hrs'}` : '';
+  const minPart = mins > 0 ? `${mins} ${mins === 1 ? 'min' : 'mins'}` : (hrs === 0 ? '0 min' : '');
+
+  return [hrPart, minPart].filter(Boolean).join(' ');
+}
+
 export function formatDate(date: Date): string {
   return date.toLocaleDateString('en-US', { 
     weekday: 'short', 
