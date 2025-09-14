@@ -83,7 +83,13 @@ export default function Home() {
 
   // Session completion handlers
   const handleBreastfeedingComplete = React.useCallback(() => {
-    sessionManager.completeBreastfeeding(breastfeedingTimer.timeMs, notes);
+    // For breastfeeding, always save the elapsed time (how long the session lasted)
+    // regardless of whether the timer was in stopwatch or countdown mode
+    const elapsedTimeMs = breastfeedingTimer.mode === 'countdown' 
+      ? (breastfeedingTimer.initialTimeMs - breastfeedingTimer.timeMs) 
+      : breastfeedingTimer.timeMs;
+    
+    sessionManager.completeBreastfeeding(elapsedTimeMs, notes);
     breastfeedingTimer.reset();
     setNotes('');
     scripture.onTimerComplete();
@@ -96,7 +102,13 @@ export default function Home() {
   }, [sessionManager, bottleAmount, bottleUnit, notes]);
 
   const handleSleepingComplete = React.useCallback(() => {
-    sessionManager.completeSleeping(sleepingTimer.timeMs, notes);
+    // For sleeping, always save the elapsed time (how long the sleep session lasted)
+    // regardless of whether the timer was in stopwatch or countdown mode
+    const elapsedTimeMs = sleepingTimer.mode === 'countdown' 
+      ? (sleepingTimer.initialTimeMs - sleepingTimer.timeMs) 
+      : sleepingTimer.timeMs;
+    
+    sessionManager.completeSleeping(elapsedTimeMs, notes);
     sleepingTimer.reset();
     setNotes('');
     setSleepStartTime(null);
