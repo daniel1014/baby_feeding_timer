@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/UI/card';
 import { Badge } from '@/components/UI/badge';
 import { Loader2, Trash2, RefreshCw } from 'lucide-react';
 import { toast } from 'react-hot-toast';
+import { getBasePathClient, prefixPath } from '@/utils/basePath';
 
 export function SessionManagerTest() {
   const { data: session } = useSession();
@@ -71,22 +72,26 @@ export function SessionManagerTest() {
     if (!session?.user) return;
 
     try {
-      const testSessions = sessions.filter(s => 
-        s.notes?.includes('Test ') || s.notes?.includes('test ')
+      const basePath = getBasePathClient();
+      const listUrl = prefixPath('/api/sessions?limit=200', basePath);
+      const listRes = await fetch(listUrl, { credentials: 'include' });
+      if (!listRes.ok) throw new Error(`Failed to fetch sessions (${listRes.status})`);
+      const data = await listRes.json();
+      const rows: any[] = data.sessions || [];
+      const testRows = rows.filter(
+        (r) => (r.notes || '').toLowerCase().includes('test ')
       );
 
-      for (const sessionToDelete of testSessions) {
-        const response = await fetch(`/api/sessions/${sessionToDelete.id}`, {
-          method: 'DELETE'
-        });
-        
+      for (const row of testRows) {
+        const delUrl = prefixPath(`/api/sessions/${row.id}`, basePath);
+        const response = await fetch(delUrl, { method: 'DELETE', credentials: 'include' });
         if (!response.ok) {
-          throw new Error(`Failed to delete session ${sessionToDelete.id}`);
+          throw new Error(`Failed to delete session ${row.id}`);
         }
       }
 
       await refreshSessions();
-      toast.success(`Cleared ${testSessions.length} test sessions`);
+      toast.success(`Cleared ${testRows.length} test sessions`);
     } catch (err) {
       toast.error('Failed to clear test data: ' + (err instanceof Error ? err.message : 'Unknown error'));
     }

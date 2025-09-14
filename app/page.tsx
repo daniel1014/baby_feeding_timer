@@ -17,6 +17,8 @@ import { ScripturePopup } from '../components/UI/ScripturePopup';
 import { useUnifiedTimer } from '../hooks/useUnifiedTimer';
 import { useSessionManager } from '../hooks/useSessionManager';
 import { useScripture } from '../hooks/useScripture';
+import { useSession } from '@/auth/auth-client';
+import { useRef } from 'react';
 
 // Types and constants
 import { SessionType, TAB_THEMES } from '../types';
@@ -33,7 +35,11 @@ export default function Home() {
 
   // Session management
   const sessionManager = useSessionManager();
+  const { refreshSessions } = sessionManager;
   const scripture = useScripture();
+  const { data: session } = useSession();
+  const loadedSessionsOnce = useRef(false);
+  const loadingInFlight = useRef(false);
 
   // UI state
   const [activeTab, setActiveTab] = useState<SessionType>('breastfeeding');
@@ -62,6 +68,18 @@ export default function Home() {
   useEffect(() => {
     requestNotificationPermission();
   }, []);
+
+  // Load sessions exactly once after user becomes available
+  useEffect(() => {
+    const userId = session?.user?.id || null;
+    if (userId && !loadedSessionsOnce.current && !loadingInFlight.current) {
+      loadedSessionsOnce.current = true;
+      loadingInFlight.current = true;
+      Promise.resolve(refreshSessions()).finally(() => {
+        loadingInFlight.current = false;
+      });
+    }
+  }, [session?.user?.id, refreshSessions]);
 
   // Session completion handlers
   const handleBreastfeedingComplete = React.useCallback(() => {
