@@ -45,18 +45,19 @@ export const BottleTab = React.memo(({
       </div>
 
       <div className="max-w-md mx-auto space-y-4 sm:space-y-6">
-        {/* Small Decorative Bottle */}
-        <div className="flex justify-center mb-4">
-          <AnimatedMilkBottleTimer
-            mode="stopwatch"
-            isRunning={false}
-            size="small"
-            theme="bottle"
-          />
-        </div>
-
-        {/* Unit Toggle */}
-        <div className="flex justify-center">
+        {/* Unit Toggle with Bottle */}
+        <div className="flex items-center justify-center gap-4 sm:gap-6">
+          {/* Small Decorative Bottle */}
+          <div className="flex-shrink-0">
+            <AnimatedMilkBottleTimer
+              mode="stopwatch"
+              isRunning={false}
+              size="small"
+              theme="bottle"
+            />
+          </div>
+          
+          {/* Unit Toggle */}
           <div className="flex bg-gray-100 rounded-lg p-0.5 sm:p-1">
             <button
               onClick={() => setBottleUnit('ml')}

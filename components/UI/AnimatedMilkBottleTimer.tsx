@@ -323,7 +323,7 @@ export default function AnimatedMilkBottleTimer({
           alt="Baby sleeping peacefully"
           width={config.width}
           height={config.height}
-          className="w-full h-full object-contain"
+          className="object-contain"
           priority
         />
       </div>

@@ -3,39 +3,19 @@
 import { useState } from "react";
 import { useSession, signOut } from "@/auth/auth-client";
 import { Button } from "@/components/UI/button";
-import { Loader2, LogOut, Settings, User } from "lucide-react";
+import { Loader2, LogOut, Settings } from "lucide-react";
 import { toast } from "react-hot-toast";
 import { useRouter } from "next/navigation";
 import { getBasePathClient, prefixPath } from "@/utils/basePath";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 
-// Generate a colorful avatar based on user's name/email
-const generateAvatar = (name: string, email: string) => {
-  const text = name || email || "U";
-  const colors = [
-    "from-pink-400 to-pink-600",
-    "from-purple-400 to-purple-600", 
-    "from-blue-400 to-blue-600",
-    "from-green-400 to-green-600",
-    "from-yellow-400 to-yellow-600",
-    "from-red-400 to-red-600",
-    "from-indigo-400 to-indigo-600",
-    "from-teal-400 to-teal-600"
-  ];
-  
-  const colorIndex = (text.charCodeAt(0) + text.charCodeAt(text.length - 1)) % colors.length;
-  const initials = text.split(' ').map(word => word[0]).join('').toUpperCase().slice(0, 2);
-  
-  return {
-    gradient: colors[colorIndex],
-    initials: initials || text[0].toUpperCase()
-  };
-};
+// 預設頭像：若沒有 provider 圖片或載入失敗，使用本地圖片
 
 export function UserMenu() {
   const { data: session, isPending } = useSession();
   const [signingOut, setSigningOut] = useState(false);
+  const [avatarError, setAvatarError] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const router = useRouter();
 
@@ -101,7 +81,7 @@ export function UserMenu() {
     );
   }
 
-  const avatar = generateAvatar(session.user.name || "", session.user.email || "");
+  const showRemoteAvatar = Boolean(session.user.image) && !avatarError;
 
   return (
     <motion.div
@@ -119,35 +99,22 @@ export function UserMenu() {
       >
         {/* Avatar */}
         <motion.div className="relative">
-          {session.user.image ? (
-            <div className="relative">
-              <Image
-                src={session.user.image}
-                alt={session.user.name || "User"}
-                width={36}
-                height={36}
-                className="w-9 h-9 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl object-cover ring-2 ring-white/50 group-hover:ring-white/80 transition-all duration-200"
-                priority
-              />
-              <motion.div 
-                initial={{ scale: 0 }}
-                animate={{ scale: isHovered ? 1 : 0 }}
-                className="absolute -top-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-white"
-              />
-            </div>
-          ) : (
+          <div className="relative">
+            <Image
+              src={showRemoteAvatar ? (session.user.image as string) : "/baby_sleeping.png"}
+              alt={session.user.name || "User"}
+              width={36}
+              height={36}
+              className="w-9 h-9 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl object-cover ring-2 ring-white/50 group-hover:ring-white/80 transition-all duration-200"
+              priority
+              onError={() => setAvatarError(true)}
+            />
             <motion.div 
-              whileHover={{ rotate: 5 }}
-              className={`w-9 h-9 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-gradient-to-br ${avatar.gradient} flex items-center justify-center text-white font-semibold text-xs sm:text-sm ring-2 ring-white/50 group-hover:ring-white/80 transition-all duration-200 shadow-lg`}
-            >
-              {avatar.initials}
-              <motion.div 
-                initial={{ scale: 0 }}
-                animate={{ scale: isHovered ? 1 : 0 }}
-                className="absolute -top-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-white"
-              />
-            </motion.div>
-          )}
+              initial={{ scale: 0 }}
+              animate={{ scale: isHovered ? 1 : 0 }}
+              className="absolute -top-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-white"
+            />
+          </div>
         </motion.div>
 
         {/* User Info */}
