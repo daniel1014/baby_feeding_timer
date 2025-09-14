@@ -1,4 +1,6 @@
-import React from 'react';
+"use client";
+
+import React, { useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Clock, Baby, Milk, Moon } from 'lucide-react';
 import { FeedingSession, SessionType, TAB_THEMES } from '../../types';
@@ -11,8 +13,23 @@ interface SessionHistoryProps {
 }
 
 export const SessionHistory = React.memo(({ sessions, activeTab }: SessionHistoryProps) => {
-  // Filter sessions by active tab type
-  const filteredSessions = sessions.filter(session => session.type === activeTab);
+  // Date range filter state
+  type Range = '24h' | '3d' | '7d' | '30d' | 'all';
+  const [range, setRange] = useState<Range>('24h');
+
+  const filteredSessions = useMemo(() => {
+    const byTab = sessions.filter(s => s.type === activeTab);
+    if (range === 'all') return byTab;
+    const now = new Date().getTime();
+    const msMap: Record<Exclude<Range, 'all'>, number> = {
+      '24h': 24 * 60 * 60 * 1000,
+      '3d': 3 * 24 * 60 * 60 * 1000,
+      '7d': 7 * 24 * 60 * 60 * 1000,
+      '30d': 30 * 24 * 60 * 60 * 1000,
+    };
+    const cutoff = now - msMap[range as Exclude<Range, 'all'>];
+    return byTab.filter(s => s.startTime.getTime() >= cutoff);
+  }, [sessions, activeTab, range]);
   
   if (filteredSessions.length === 0) {
     const tabNames = {
@@ -24,13 +41,28 @@ export const SessionHistory = React.memo(({ sessions, activeTab }: SessionHistor
     
     return (
       <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl p-4 sm:p-6">
-        <h3 className="text-lg sm:text-xl font-semibold text-gray-800 mb-3 sm:mb-4 flex items-center gap-2">
-          <Clock className="w-4 h-4 sm:w-5 sm:h-5" />
-          Recent {tabNames[activeTab]} History
-        </h3>
+        <div className="flex items-center gap-2 mb-3 sm:mb-4">
+          <h3 className="text-lg sm:text-xl font-semibold text-gray-800 flex items-center gap-2">
+            <Clock className="w-4 h-4 sm:w-5 sm:h-5" />
+            Recent {tabNames[activeTab]} History
+          </h3>
+          <div className="ml-auto">
+            <select
+              value={range}
+              onChange={(e) => setRange(e.target.value as Range)}
+              className="text-xs sm:text-sm px-2 py-1.5 bg-white border border-gray-200 rounded-full shadow-sm focus:outline-none focus:ring-2 focus:ring-gray-300"
+            >
+              <option value="24h">Last 24 hours</option>
+              <option value="3d">Last 3 days</option>
+              <option value="7d">Last 7 days</option>
+              <option value="30d">Last 30 days</option>
+              <option value="all">All</option>
+            </select>
+          </div>
+        </div>
         <div className="text-center py-8 text-gray-500">
           <div className="text-4xl mb-2">{TAB_THEMES[activeTab].icon}</div>
-          <p>No {tabNames[activeTab].toLowerCase()} sessions yet</p>
+          <p>No {tabNames[activeTab].toLowerCase()} sessions in selected range</p>
           <p className="text-sm mt-1">Start tracking to see your history here</p>
         </div>
       </div>
@@ -93,10 +125,25 @@ export const SessionHistory = React.memo(({ sessions, activeTab }: SessionHistor
 
   return (
     <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl p-4 sm:p-6">
-      <h3 className="text-lg sm:text-xl font-semibold text-gray-800 mb-3 sm:mb-4 flex items-center gap-2">
-        <Clock className="w-4 h-4 sm:w-5 sm:h-5" />
-        Recent {tabNames[activeTab]} History
-      </h3>
+      <div className="flex items-center gap-2 mb-3 sm:mb-4">
+        <h3 className="text-lg sm:text-xl font-semibold text-gray-800 flex items-center gap-2">
+          <Clock className="w-4 h-4 sm:w-5 sm:h-5" />
+          Recent {tabNames[activeTab]} History
+        </h3>
+        <div className="ml-auto">
+          <select
+            value={range}
+            onChange={(e) => setRange(e.target.value as Range)}
+            className="text-xs sm:text-sm px-2 py-1.5 bg-white border border-gray-200 rounded-full shadow-sm focus:outline-none focus:ring-2 focus:ring-gray-300"
+          >
+            <option value="24h">Last 24 hours</option>
+            <option value="3d">Last 3 days</option>
+            <option value="7d">Last 7 days</option>
+            <option value="30d">Last 30 days</option>
+            <option value="all">All</option>
+          </select>
+        </div>
+      </div>
       <div className="space-y-2.5 sm:space-y-3">
         {filteredSessions.map((session, index) => {
           const theme = TAB_THEMES[session.type as SessionType];
