@@ -14,8 +14,16 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // Allow access to auth pages
-  if (pathname.startsWith("/sign-in") || pathname.startsWith("/sign-up")) {
+  // Allow access to public pages (guest mode)
+  if (
+    pathname === "/" ||
+    pathname.startsWith("/sign-in") ||
+    pathname.startsWith("/sign-up") ||
+    pathname.startsWith("/forgot-password") ||
+    pathname.startsWith("/reset-password") ||
+    pathname.startsWith("/simple") ||
+    pathname.startsWith("/test")
+  ) {
     return NextResponse.next();
   }
 
