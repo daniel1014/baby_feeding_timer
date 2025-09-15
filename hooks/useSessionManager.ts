@@ -19,10 +19,11 @@ export interface UseSessionManagerReturn {
   loading: boolean;
   error: string | null;
   refreshSessions: () => Promise<void>;
-  completeBreastfeeding: (timerTimeMs: number, notes?: string) => void;
-  recordBottleFeeding: (amount: string, unit: 'ml' | 'oz', notes?: string) => void;
-  completeSleeping: (timerTimeMs: number, notes?: string) => void;
+  completeBreastfeeding: (timerTimeMs: number, notes?: string, endTimeOverride?: Date) => void;
+  recordBottleFeeding: (amount: string, unit: 'ml' | 'oz', notes?: string, timeOverride?: Date) => void;
+  completeSleeping: (timerTimeMs: number, notes?: string, endTimeOverride?: Date) => void;
   recordDiaperChange: (input: DiaperRecordInput) => void;
+  deleteSessions: (ids: string[]) => Promise<void>;
 }
 
 export function useSessionManager(): UseSessionManagerReturn {
@@ -126,20 +127,20 @@ export function useSessionManager(): UseSessionManagerReturn {
     }
   }, []);
 
-  const completeBreastfeeding = useCallback(async (timerTimeMs: number, notes?: string) => {
+  const completeBreastfeeding = useCallback(async (timerTimeMs: number, notes?: string, endTimeOverride?: Date) => {
     if (timerTimeMs === 0) return;
 
     try {
-      const now = new Date();
+      const endTime = endTimeOverride ?? new Date();
       const durationSeconds = Math.floor(timerTimeMs / 1000);
-      const startTime = new Date(now.getTime() - timerTimeMs);
+      const startTime = new Date(endTime.getTime() - timerTimeMs);
 
       if (!isAuthed) {
         const local: BreastfeedingSession = {
           id: String(Date.now()),
           type: 'breastfeeding',
           startTime,
-          endTime: now,
+          endTime,
           date: startTime.toISOString().split('T')[0],
           duration: durationSeconds,
           notes: notes || undefined,
@@ -158,7 +159,7 @@ export function useSessionManager(): UseSessionManagerReturn {
           body: JSON.stringify({
             sessionType: 'breastfeeding',
             startTime: startTime.toISOString(),
-            endTime: now.toISOString(),
+            endTime: endTime.toISOString(),
             duration: durationSeconds,
             notes: notes || null,
           }),
@@ -188,12 +189,12 @@ export function useSessionManager(): UseSessionManagerReturn {
     }
   }, [basePath, isAuthed, saveLocal, mapApiToSession]);
 
-  const recordBottleFeeding = useCallback(async (amount: string, unit: 'ml' | 'oz', notes?: string) => {
+  const recordBottleFeeding = useCallback(async (amount: string, unit: 'ml' | 'oz', notes?: string, timeOverride?: Date) => {
     if (!amount) return;
 
     try {
+      const now = timeOverride ?? new Date();
       if (!isAuthed) {
-        const now = new Date();
         const session: BottleFeedingSession = {
           id: Date.now().toString(),
           type: 'bottle',
@@ -210,7 +211,6 @@ export function useSessionManager(): UseSessionManagerReturn {
           return next;
         });
       } else {
-        const now = new Date();
         const url = prefixPath('/api/sessions', basePath);
         const res = await fetch(url, {
           method: 'POST',
@@ -246,19 +246,19 @@ export function useSessionManager(): UseSessionManagerReturn {
     }
   }, [basePath, isAuthed, saveLocal, mapApiToSession]);
 
-  const completeSleeping = useCallback(async (timerTimeMs: number, notes?: string) => {
+  const completeSleeping = useCallback(async (timerTimeMs: number, notes?: string, endTimeOverride?: Date) => {
     if (timerTimeMs === 0) return;
 
     try {
-      const now = new Date();
+      const endTime = endTimeOverride ?? new Date();
       const durationSeconds = Math.floor(timerTimeMs / 1000);
-      const startTime = new Date(now.getTime() - timerTimeMs);
+      const startTime = new Date(endTime.getTime() - timerTimeMs);
       if (!isAuthed) {
         const local: SleepingSession = {
           id: String(Date.now()),
           type: 'sleeping',
           startTime,
-          endTime: now,
+          endTime,
           date: startTime.toISOString().split('T')[0],
           duration: durationSeconds,
           notes: notes || undefined,
@@ -277,7 +277,7 @@ export function useSessionManager(): UseSessionManagerReturn {
           body: JSON.stringify({
             sessionType: 'sleeping',
             startTime: startTime.toISOString(),
-            endTime: now.toISOString(),
+            endTime: endTime.toISOString(),
             duration: durationSeconds,
             notes: notes || null,
           }),
@@ -370,6 +370,31 @@ export function useSessionManager(): UseSessionManagerReturn {
     }
   }, [basePath, isAuthed, saveLocal, mapApiToSession]);
 
+  const deleteSessions = useCallback(async (ids: string[]) => {
+    if (!ids.length) return;
+    try {
+      if (!isAuthed) {
+        setSessions(prev => {
+          const next = prev.filter(s => !ids.includes(s.id));
+          saveLocal(next);
+          return next;
+        });
+      } else {
+        await Promise.all(ids.map(async (id) => {
+          const url = prefixPath(`/api/sessions/${id}`, basePath);
+          const res = await fetch(url, { method: 'DELETE', credentials: 'include' });
+          if (!res.ok) throw new Error(`DELETE /api/sessions/${id} failed: ${res.status}`);
+        }));
+        setSessions(prev => prev.filter(s => !ids.includes(s.id)));
+      }
+      toast.success('Session deleted');
+    } catch (e: any) {
+      console.error('Failed to delete sessions:', e);
+      toast.error('Failed to delete sessions');
+      setError(e?.message || 'Failed to delete sessions');
+    }
+  }, [basePath, isAuthed, saveLocal]);
+
   const refreshSessions = useCallback(async () => {
     if (refreshingRef.current) return; // prevent re-entry
     try {
@@ -416,6 +441,7 @@ export function useSessionManager(): UseSessionManagerReturn {
     completeBreastfeeding,
     recordBottleFeeding,
     completeSleeping,
-    recordDiaperChange
+    recordDiaperChange,
+    deleteSessions
   };
 }
