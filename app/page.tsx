@@ -85,34 +85,40 @@ export default function Home() {
   const handleBreastfeedingComplete = React.useCallback(() => {
     // For breastfeeding, always save the elapsed time (how long the session lasted)
     // regardless of whether the timer was in stopwatch or countdown mode
-    const elapsedTimeMs = breastfeedingTimer.mode === 'countdown' 
-      ? (breastfeedingTimer.initialTimeMs - breastfeedingTimer.timeMs) 
+    const elapsedTimeMs = breastfeedingTimer.mode === 'countdown'
+      ? (breastfeedingTimer.initialTimeMs - breastfeedingTimer.timeMs)
       : breastfeedingTimer.timeMs;
-    
-    sessionManager.completeBreastfeeding(elapsedTimeMs, notes);
+
+    sessionManager.completeBreastfeeding(elapsedTimeMs, notes, customSessionTime || undefined);
     breastfeedingTimer.reset();
     setNotes('');
+    setCustomSessionTime(null);
+    setCurrentTime(new Date());
     scripture.onTimerComplete();
-  }, [breastfeedingTimer, sessionManager, notes, scripture]);
+  }, [breastfeedingTimer, sessionManager, notes, scripture, customSessionTime]);
 
   const handleBottleFeedingRecord = React.useCallback(() => {
-    sessionManager.recordBottleFeeding(bottleAmount, bottleUnit, notes);
+    sessionManager.recordBottleFeeding(bottleAmount, bottleUnit, notes, customSessionTime || undefined);
     setBottleAmount('');
     setNotes('');
-  }, [sessionManager, bottleAmount, bottleUnit, notes]);
+    setCustomSessionTime(null);
+    setCurrentTime(new Date());
+  }, [sessionManager, bottleAmount, bottleUnit, notes, customSessionTime]);
 
   const handleSleepingComplete = React.useCallback(() => {
     // For sleeping, always save the elapsed time (how long the sleep session lasted)
     // regardless of whether the timer was in stopwatch or countdown mode
-    const elapsedTimeMs = sleepingTimer.mode === 'countdown' 
-      ? (sleepingTimer.initialTimeMs - sleepingTimer.timeMs) 
+    const elapsedTimeMs = sleepingTimer.mode === 'countdown'
+      ? (sleepingTimer.initialTimeMs - sleepingTimer.timeMs)
       : sleepingTimer.timeMs;
-    
-    sessionManager.completeSleeping(elapsedTimeMs, notes);
+
+    sessionManager.completeSleeping(elapsedTimeMs, notes, customSessionTime || undefined);
     sleepingTimer.reset();
     setNotes('');
     setSleepStartTime(null);
-  }, [sleepingTimer, sessionManager, notes]);
+    setCustomSessionTime(null);
+    setCurrentTime(new Date());
+  }, [sleepingTimer, sessionManager, notes, customSessionTime]);
 
   const handleSleepStart = React.useCallback(() => {
     setSleepStartTime(new Date());
@@ -295,7 +301,11 @@ export default function Home() {
         </div>
 
         {/* Recent Sessions */}
-        <SessionHistory sessions={sessionManager.sessions} activeTab={activeTab} />
+        <SessionHistory
+          sessions={sessionManager.sessions}
+          activeTab={activeTab}
+          onDeleteSessions={sessionManager.deleteSessions}
+        />
 
         {/* Encouragement Footer */}
         <motion.div

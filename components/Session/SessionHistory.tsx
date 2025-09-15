@@ -10,12 +10,31 @@ import { ozToMl } from '../../utils/conversions';
 interface SessionHistoryProps {
   sessions: FeedingSession[];
   activeTab: SessionType;
+  onDeleteSessions?: (ids: string[]) => void;
 }
 
-export const SessionHistory = React.memo(({ sessions, activeTab }: SessionHistoryProps) => {
+export const SessionHistory = React.memo(({ sessions, activeTab, onDeleteSessions }: SessionHistoryProps) => {
   // Date range filter state
   type Range = '24h' | '3d' | '7d' | '30d' | 'all';
   const [range, setRange] = useState<Range>('24h');
+  const [selectionMode, setSelectionMode] = useState(false);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+
+  const toggleSelect = (id: string) => {
+    setSelected(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+
+  const handleDelete = () => {
+    if (onDeleteSessions && selected.size > 0) {
+      onDeleteSessions(Array.from(selected));
+      setSelected(new Set());
+      setSelectionMode(false);
+    }
+  };
 
   const filteredSessions = useMemo(() => {
     const byTab = sessions.filter(s => s.type === activeTab);
@@ -130,7 +149,31 @@ export const SessionHistory = React.memo(({ sessions, activeTab }: SessionHistor
           <Clock className="w-4 h-4 sm:w-5 sm:h-5" />
           Recent {tabNames[activeTab]} History
         </h3>
-        <div className="ml-auto">
+        <div className="ml-auto flex items-center gap-2">
+          {selectionMode && (
+            <button
+              onClick={handleDelete}
+              className="text-xs sm:text-sm px-2 py-1.5 bg-red-500 text-white rounded-full shadow-sm"
+            >
+              Delete
+            </button>
+          )}
+          {selectionMode && (
+            <button
+              onClick={() => { setSelectionMode(false); setSelected(new Set()); }}
+              className="text-xs sm:text-sm px-2 py-1.5 bg-gray-100 text-gray-700 rounded-full shadow-sm"
+            >
+              Cancel
+            </button>
+          )}
+          {!selectionMode && (
+            <button
+              onClick={() => setSelectionMode(true)}
+              className="text-xs sm:text-sm px-2 py-1.5 bg-gray-100 text-gray-700 rounded-full shadow-sm"
+            >
+              Select
+            </button>
+          )}
           <select
             value={range}
             onChange={(e) => setRange(e.target.value as Range)}
@@ -154,9 +197,17 @@ export const SessionHistory = React.memo(({ sessions, activeTab }: SessionHistor
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.1 }}
-              className="flex items-center justify-between p-3 sm:p-4 bg-white rounded-lg shadow-sm border border-gray-100"
+              className={`flex items-center justify-between p-3 sm:p-4 rounded-lg shadow-sm border border-gray-100 ${selectionMode && selected.has(session.id) ? 'bg-gray-50' : 'bg-white'}`}
             >
               <div className="flex items-center gap-3 w-0 flex-1 min-w-0">
+                {selectionMode && (
+                  <input
+                    type="checkbox"
+                    checked={selected.has(session.id)}
+                    onChange={() => toggleSelect(session.id)}
+                    className="w-4 h-4 flex-shrink-0"
+                  />
+                )}
                 <div className={`p-2 rounded-full ${theme.secondary}`}>
                   {getSessionIcon(session.type as SessionType)}
                 </div>
