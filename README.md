@@ -6,7 +6,7 @@
 
 **MVP Features**:
 - ⏰ Simple timer functionality (set & start/stop)
-- 🍼 Cute baby milk container stickers/graphics
+- 🍼 Custom SVG animation of a cute baby milk bottle draining
 - 📖 Encouraging Bible scripture popups when timer triggers
 - 👶 User-friendly interface for exhausted new parents
 
