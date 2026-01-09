@@ -13,6 +13,7 @@ const nextConfig: NextConfig = {
     // 這樣 <Image> 會直接輸出 <img>，避免經過 /_next/image
     unoptimized: true,
   },
+  basePath: '/babyfeed',
 };
 
 export default nextConfig;
