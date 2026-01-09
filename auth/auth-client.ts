@@ -1,20 +1,17 @@
 import { createAuthClient } from "better-auth/react";
 import type { auth } from "./auth";
 
-// Next.js basePath - must match next.config.ts
-const BASE_PATH = "/babyfeed";
-
 // Compute origin at runtime (browser) to avoid hardcoding localhost in prod
 const runtimeOrigin = typeof window !== "undefined"
-    ? window.location.origin.replace(/\/$/, "")
-    : (process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000").replace(/\/$/, "");
+  ? window.location.origin.replace(/\/$/, "")
+  : (process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000").replace(/\/$/, "");
 
 // Debug: Log the base URL being used
-console.log("Auth client base URL:", `${runtimeOrigin}${BASE_PATH}/api/auth`);
+console.log("Auth client base URL:", `${runtimeOrigin}/api/auth`);
 
 export const authClient = createAuthClient({
     baseURL: runtimeOrigin,
-    basePath: `${BASE_PATH}/api/auth`,
+    basePath: "/api/auth",
     fetchOptions: {
         onError(context) {
             console.error("Auth client error details:", {
@@ -25,7 +22,7 @@ export const authClient = createAuthClient({
                 statusText: context.response?.statusText,
                 url: context.request?.url,
             });
-
+            
             // Don't try to read response body as it may already be consumed
             // The error details above should be sufficient for debugging
         },

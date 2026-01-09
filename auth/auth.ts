@@ -31,8 +31,8 @@ databasePool.on('error', (err) => {
 
 export const auth = betterAuth({
     database: databasePool,
-    // Mount Better Auth at /babyfeed/api/auth (includes Next.js basePath)
-    basePath: "/babyfeed/api/auth",
+    // Mount Better Auth at /api/auth (no Next.js basePath; worker adds prefix externally)
+    basePath: "/api/auth",
     // 動態信任來源：同時支援正式網域、無 www 版本、本地與 Vercel 預覽
     trustedOrigins: [
         "https://www.faithfulstack.com",
@@ -63,7 +63,7 @@ export const auth = betterAuth({
                 required: false,
             },
             lastName: {
-                type: "string",
+                type: "string", 
                 required: false,
             },
             isEmailVerified: {
