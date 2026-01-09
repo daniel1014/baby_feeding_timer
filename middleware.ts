@@ -1,12 +1,23 @@
 import { NextRequest, NextResponse } from "next/server";
 
+// basePath must match next.config.ts
+const BASE_PATH = "/babyfeed";
+
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Skip middleware for static files and API routes
+  // Strip basePath from pathname for route matching
+  // e.g., "/babyfeed/sign-in" → "/sign-in", "/babyfeed" → "/"
+  const normalizedPathname = pathname.startsWith(BASE_PATH)
+    ? pathname.slice(BASE_PATH.length) || "/"
+    : pathname;
+
+  // Skip middleware for static files and API routes (check both original and normalized)
   if (
     pathname.startsWith("/_next") ||
-    pathname.startsWith("/api") ||
+    normalizedPathname.startsWith("/api") ||
+    pathname.startsWith(`${BASE_PATH}/_next`) ||
+    pathname.startsWith(`${BASE_PATH}/api`) ||
     pathname.startsWith("/static") ||
     pathname.includes(".") ||
     pathname.startsWith("/favicon")
@@ -16,13 +27,13 @@ export async function middleware(request: NextRequest) {
 
   // Allow access to public pages (guest mode)
   if (
-    pathname === "/" ||
-    pathname.startsWith("/sign-in") ||
-    pathname.startsWith("/sign-up") ||
-    pathname.startsWith("/forgot-password") ||
-    pathname.startsWith("/reset-password") ||
-    pathname.startsWith("/simple") ||
-    pathname.startsWith("/test")
+    normalizedPathname === "/" ||
+    normalizedPathname.startsWith("/sign-in") ||
+    normalizedPathname.startsWith("/sign-up") ||
+    normalizedPathname.startsWith("/forgot-password") ||
+    normalizedPathname.startsWith("/reset-password") ||
+    normalizedPathname.startsWith("/simple") ||
+    normalizedPathname.startsWith("/test")
   ) {
     return NextResponse.next();
   }
@@ -32,10 +43,11 @@ export async function middleware(request: NextRequest) {
   const sessionCookie =
     request.cookies.get("better-auth.session_token") ||
     request.cookies.get("__Secure-better-auth.session_token");
-  
+
   if (!sessionCookie?.value) {
-    const signInUrl = new URL("/sign-in", request.url);
-    signInUrl.searchParams.set("redirect", pathname);
+    // Include basePath in redirect URL
+    const signInUrl = new URL(`${BASE_PATH}/sign-in`, request.url);
+    signInUrl.searchParams.set("redirect", normalizedPathname);
     return NextResponse.redirect(signInUrl);
   }
 
