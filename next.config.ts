@@ -4,6 +4,8 @@ const nextConfig: NextConfig = {
   eslint: {
     ignoreDuringBuilds: true,
   },
+  // Prevent trailing slash redirect loops when proxied from parent project
+  trailingSlash: false,
   images: {
     // 允許載入 Google OAuth 頭像來源
     remotePatterns: [
