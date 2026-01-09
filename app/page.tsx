@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Baby, Milk, Moon } from 'lucide-react';
 import Image from 'next/image';
+import diaperBaby from '@/public/diaper_baby.svg';
 
 // Components
 import { PageHeader } from '../components/Layout/PageHeader';
@@ -26,10 +27,10 @@ import { requestNotificationPermission } from '../utils/soundNotification';
 
 export default function Home() {
   // Timers for each tab
-  const breastfeedingTimer = useUnifiedTimer({ 
+  const breastfeedingTimer = useUnifiedTimer({
     mode: 'stopwatch'
   });
-  const sleepingTimer = useUnifiedTimer({ 
+  const sleepingTimer = useUnifiedTimer({
     mode: 'stopwatch'
   });
 
@@ -55,12 +56,12 @@ export default function Home() {
   useEffect(() => {
     setIsClient(true);
     setCurrentTime(new Date());
-    
+
     // Update current time every minute
     const interval = setInterval(() => {
       setCurrentTime(new Date());
     }, 60000);
-    
+
     return () => clearInterval(interval);
   }, []);
 
@@ -148,24 +149,23 @@ export default function Home() {
           {(['breastfeeding', 'bottle', 'sleeping', 'diaper'] as SessionType[]).map((tabType) => {
             const theme = TAB_THEMES[tabType];
             const isActive = activeTab === tabType;
-            
+
             return (
               <motion.button
                 key={tabType}
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 onClick={() => setActiveTab(tabType)}
-                className={`flex-1 flex items-center justify-center gap-1.5 sm:gap-2 py-2 sm:py-3 px-3 sm:px-4 rounded-lg font-medium transition-all duration-300 ${
-                  isActive
-                    ? theme.secondary + ' shadow-md transform translate-y-[-1px]'
-                    : `text-gray-600 hover:${theme.accent} hover:shadow-sm`
-                }`}
+                className={`flex-1 flex items-center justify-center gap-1.5 sm:gap-2 py-2 sm:py-3 px-3 sm:px-4 rounded-lg font-medium transition-all duration-300 ${isActive
+                  ? theme.secondary + ' shadow-md transform translate-y-[-1px]'
+                  : `text-gray-600 hover:${theme.accent} hover:shadow-sm`
+                  }`}
               >
                 {tabType === 'breastfeeding' && <Baby className="w-3.5 h-3.5 sm:w-4 sm:h-4" />}
                 {tabType === 'bottle' && <Milk className="w-3.5 h-3.5 sm:w-4 sm:h-4" />}
                 {tabType === 'sleeping' && <Moon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />}
                 {tabType === 'diaper' && (
-                  <Image src="/diaper_baby.svg" alt="Diaper" width={14} height={14} className="sm:w-4 sm:h-4" />
+                  <Image src={diaperBaby} alt="Diaper" width={14} height={14} className="sm:w-4 sm:h-4" />
                 )}
                 {/* larger screen only */}
                 <span className="hidden sm:inline">
